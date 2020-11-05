@@ -10,6 +10,11 @@ let test () =
         [ 0; 2; 8; 16 ]
     ] 
 
+let dumpBoard origin board =
+    Console.SetCursorPosition(origin.X, origin.Y)
+    printfn "%s" (boardToString board)
+    printfn ""
+
 [<EntryPoint>]
 let main argv =
     let size = Array.tryHead argv |> Option.defaultValue "4" |> int

@@ -14,20 +14,17 @@ type Board = {
 
 type Direction = | Up | Down | Left | Right
 
-let dumpBoard origin board =
-    Console.SetCursorPosition(origin.X, origin.Y)
+let boardToString board =
     board.Cells
     |> Map.toSeq
     |> Seq.sortBy (fun (pos, _) -> pos.Y, pos.X)
-    |> Seq.iter (fun (pos, cell) ->
-        printf "%s" (if pos.X = 1 then Environment.NewLine else String.Empty)
-        match cell with
-        | 0 -> "    -"
-        | v -> sprintf "%5i" v
-        |> printf "%s"
-    )
-    printfn ""
-    board
+    |> Seq.fold (fun acc (pos, cell) ->
+        acc
+            + sprintf "%s" (if pos.X = 1 then Environment.NewLine else String.Empty)
+            + match cell with
+                | 0 -> "    -"
+                | v -> sprintf "%5i" v
+    ) String.Empty
 
 let r = Random()
 let randomPos board =
