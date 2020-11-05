@@ -34,12 +34,10 @@ let randomPos max =
     { X = r.Next(1, max); Y = r.Next(1, max) }
 
 let randomValue () =
-    //pown 2 (r.Next(1, 3))
-    2
+    pown 2 (r.Next(1, 3))
 
 let newBoard size =
-    let randoms = set [{X = 1; Y = 2;};{X = 1; Y = 3}]
-    //let randoms = set [(randomPos size); (randomPos size)]
+    let randoms = set [(randomPos size); (randomPos size)]
     [ for x in [1..size] do
         for y in [1..size] do
             yield { X = x; Y = y} ]
@@ -74,7 +72,7 @@ let flatten cells =
 let padList n value list =
     list@(List.replicate (n - List.length list) value)
 
-let swipe direction board =
+let swipe size direction board =
     let cellFilter rowCol cellPos = 
         match direction with
         | Up | Down -> cellPos.X = rowCol
@@ -83,9 +81,9 @@ let swipe direction board =
     let cellMapper currentRowCol i =
         match direction with
         | Up -> {X = currentRowCol; Y = i + 1}
-        | Down -> {X = currentRowCol; Y = 4 - i}
+        | Down -> {X = currentRowCol; Y = size - i}
         | Left -> {X = i + 1; Y = currentRowCol}
-        | Right -> {X = 4 - i; Y = currentRowCol}
+        | Right -> {X = size - i; Y = currentRowCol}
 
     let cellSorter cells =
         match direction with
@@ -103,11 +101,11 @@ let swipe direction board =
         |> List.map snd
         |> flatten
         |> cellSorter
-        |> padList 4 0
+        |> padList size 0
         |> List.indexed
         |> List.fold (cellFolder currentRowCol) board
 
-    [1..4]
+    [1..size]
     |> List.fold rowFolder board
 
 let test () =
@@ -129,6 +127,7 @@ let main argv =
 
     //swipe Up board
     //|> dumpBoard
+    let swipe = swipe 4
 
     test ()
     |> dumpBoard
