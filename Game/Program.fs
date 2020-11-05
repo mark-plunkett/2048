@@ -71,27 +71,44 @@ let flatten cells =
     flattenRec [] cells
     |> List.rev
 
-let padList n v list =
-    list@([1..n-List.length list] |> List.map (fun _ -> v))
+let padList n value list =
+    list@(List.replicate (n - List.length list) value)
 
 let swipe direction board =
-    match direction with
-    | Up -> 
-        let cellFolder x cells (i, newVal) =
-            Map.add {X=x;Y=i+1} newVal cells
-        let rowFolder board currentX =
-            board
-            |> Map.toList
-            |> List.where (fun (_, v) -> v > 0)
-            |> List.where (fun ({ X = x; Y = _ }, _) -> x = currentX)
-            |> List.map (fun (pos, _) -> board.[pos])
-            |> flatten
-            |> padList 4 0
-            |> List.toArray
-            |> Array.indexed
-            |> Array.fold (cellFolder currentX) board
-        [1..4]
-        |> List.fold rowFolder board
+    let cellFilter rowCol cellPos = 
+        match direction with
+        | Up | Down -> cellPos.X = rowCol
+        | Left | Right -> cellPos.Y = rowCol
+
+    let cellMapper currentRowCol i =
+        match direction with
+        | Up -> {X = currentRowCol; Y = i + 1}
+        | Down -> {X = currentRowCol; Y = 4 - i}
+        | Left -> {X = i + 1; Y = currentRowCol}
+        | Right -> {X = 4 - i; Y = currentRowCol}
+
+    let cellSorter cells =
+        match direction with
+        | Up | Left -> cells
+        | Down | Right -> List.rev cells
+
+    let cellFolder currentRowCol cells (i, newVal) =
+        Map.add (cellMapper currentRowCol i) newVal cells
+
+    let rowFolder board currentRowCol =
+        board
+        |> Map.toList
+        |> List.where (fun (_, v) -> v > 0)
+        |> List.where (fst >> cellFilter currentRowCol)
+        |> List.map snd
+        |> flatten
+        |> cellSorter
+        |> padList 4 0
+        |> List.indexed
+        |> List.fold (cellFolder currentRowCol) board
+
+    [1..4]
+    |> List.fold rowFolder board
 
 let test () =
     newBoardFromList [
@@ -116,6 +133,14 @@ let main argv =
     test ()
     |> dumpBoard
     |> swipe Up
+    |> dumpBoard
+    |> swipe Down
+    |> dumpBoard
+    |> swipe Left
+    |> dumpBoard
+    |> swipe Up
+    |> dumpBoard
+    |> swipe Left
     |> dumpBoard
 
     0
