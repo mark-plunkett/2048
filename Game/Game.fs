@@ -84,31 +84,31 @@ let swipe size direction board =
         | Up | Down -> cellPos.X = rowCol
         | Left | Right -> cellPos.Y = rowCol
 
-    let cellMapper currentRowCol i =
+    let cellMapper rowOrCol i =
         match direction with
-        | Up -> {X = currentRowCol; Y = i + 1}
-        | Down -> {X = currentRowCol; Y = size - i}
-        | Left -> {X = i + 1; Y = currentRowCol}
-        | Right -> {X = size - i; Y = currentRowCol}
+        | Up -> {X = rowOrCol; Y = i + 1}
+        | Down -> {X = rowOrCol; Y = size - i}
+        | Left -> {X = i + 1; Y = rowOrCol}
+        | Right -> {X = size - i; Y = rowOrCol}
 
     let cellSorter cells =
         match direction with
         | Up | Left -> cells
         | Down | Right -> List.rev cells
 
-    let cellFolder currentRowCol cells (i, newVal) =
-        Map.add (cellMapper currentRowCol i) newVal cells
+    let cellFolder rowOrCol cells (i, newVal) =
+        Map.add (cellMapper rowOrCol i) newVal cells
 
-    let rowFolder board currentRowCol =
+    let cellsFolder board rowOrCol =
         let newCells = 
             board.Cells
             |> Map.toList
             |> List.where (snd >> (<) 0)
-            |> List.where (fst >> cellFilter currentRowCol)
+            |> List.where (fst >> cellFilter rowOrCol)
             |> List.map snd
             |> (flatten >> cellSorter >> padList size 0)
             |> List.indexed
-            |> List.fold (cellFolder currentRowCol) board.Cells
+            |> List.fold (cellFolder rowOrCol) board.Cells
         { board with Cells = newCells }
 
-    List.fold rowFolder board [1..size]
+    List.fold cellsFolder board [1..size]
