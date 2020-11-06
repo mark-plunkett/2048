@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Game", "Game\Game.fsproj", "{594A1478-0EE1-4A2F-BA5C-ECED5A3E3FD7}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tests", "Tests\Tests.fsproj", "{FCA131E9-C575-4720-8733-60D6033785A2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,17 @@ Global
 		{594A1478-0EE1-4A2F-BA5C-ECED5A3E3FD7}.Release|x64.Build.0 = Release|Any CPU
 		{594A1478-0EE1-4A2F-BA5C-ECED5A3E3FD7}.Release|x86.ActiveCfg = Release|Any CPU
 		{594A1478-0EE1-4A2F-BA5C-ECED5A3E3FD7}.Release|x86.Build.0 = Release|Any CPU
+		{FCA131E9-C575-4720-8733-60D6033785A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCA131E9-C575-4720-8733-60D6033785A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCA131E9-C575-4720-8733-60D6033785A2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FCA131E9-C575-4720-8733-60D6033785A2}.Debug|x64.Build.0 = Debug|Any CPU
+		{FCA131E9-C575-4720-8733-60D6033785A2}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FCA131E9-C575-4720-8733-60D6033785A2}.Debug|x86.Build.0 = Debug|Any CPU
+		{FCA131E9-C575-4720-8733-60D6033785A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCA131E9-C575-4720-8733-60D6033785A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FCA131E9-C575-4720-8733-60D6033785A2}.Release|x64.ActiveCfg = Release|Any CPU
+		{FCA131E9-C575-4720-8733-60D6033785A2}.Release|x64.Build.0 = Release|Any CPU
+		{FCA131E9-C575-4720-8733-60D6033785A2}.Release|x86.ActiveCfg = Release|Any CPU
+		{FCA131E9-C575-4720-8733-60D6033785A2}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
