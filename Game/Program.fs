@@ -11,21 +11,31 @@ let dumpBoard origin board =
     printfn "Score: %i" board.Score
     printfn ""
 
+let rec getKeyboardDirection board =
+    match Console.ReadKey().Key with
+    | ConsoleKey.UpArrow -> Up
+    | ConsoleKey.DownArrow -> Down
+    | ConsoleKey.LeftArrow -> Left
+    | ConsoleKey.RightArrow -> Right
+    | _ -> getKeyboardDirection board
+
 [<EntryPoint>]
 let main argv =
-    let size = Array.tryHead argv |> Option.defaultValue "4" |> int
-    let board = newBoard size
+    let argsParser = Argu.ArgumentParser.Create<Args.Args>(programName = "2048.exe")
+    let args = argsParser.Parse argv
+    let board = newBoard (args.GetResult(Args.Size, defaultValue = 4))
+    let directionFactory =
+        match args.TryGetResult(Args.MonteCarlo) with
+        | Some (branches, depth) -> MonteCarloSolver.generateNextDirection branches depth
+        | None -> getKeyboardDirection
+
     let rec loop board =
         dumpBoard origin board |> ignore
         match canSwipe board with
         | false -> printfn "Game over :(\n"
         | true -> 
-            match Console.ReadKey().Key with
-            | ConsoleKey.UpArrow -> trySwipe Up board
-            | ConsoleKey.DownArrow -> trySwipe Down board
-            | ConsoleKey.LeftArrow -> trySwipe Left board
-            | ConsoleKey.RightArrow -> trySwipe Right board
-            | _ -> board
+            let direction = directionFactory board
+            trySwipe direction board
             |> loop
 
     loop board
