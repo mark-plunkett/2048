@@ -16,16 +16,17 @@ type Board = {
 type Direction = | Up | Down | Left | Right
 
 let boardToString board =
+    let newLine = Environment.NewLine
     board.Cells
     |> Map.toSeq
     |> Seq.sortBy (fun (pos, _) -> pos.Y, pos.X)
     |> Seq.fold (fun acc (pos, cell) ->
         acc
-            + sprintf "%s" (if pos.X = 1 then Environment.NewLine else String.Empty)
+            + if pos.X = 1 && pos.Y > 1 then newLine + newLine else String.Empty
             + match cell with
                 | 0 -> "    -"
                 | v -> sprintf "%5i" v
-    ) String.Empty
+    ) newLine
 
 let r = Random()
 let randomPos board =
