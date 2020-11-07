@@ -19,5 +19,5 @@ let cellsCanMoveValues : obj[] seq =
 
 [<Theory; MemberData("cellsCanMoveValues")>]
 let ``cellsCanMove`` cells expected =
-    let result = Game.cellsCanMove cells
+    let result = Game.anyCellsCanMove cells
     Assert.Equal(expected, result)
