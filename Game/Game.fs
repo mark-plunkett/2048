@@ -10,6 +10,7 @@ type Position = {
 type Board = {
     Cells: Map<Position, int>
     Size: int
+    Score: int
 }
 
 type Direction = | Up | Down | Left | Right
@@ -48,7 +49,11 @@ let newBoard size =
             for y in [1..size] do
                 yield { X = x; Y = y}, 0 ]
         |> Map.ofList
-    { Cells = cells; Size = size }
+    { 
+        Cells = cells 
+        Size = size
+        Score = 0
+    }
     |> addRandomCell
     |> addRandomCell
 
@@ -61,16 +66,18 @@ let newBoardFromList board =
     ) Map.empty
 
 let flatten cells =
-    let rec flattenRec acc cells =
+    let rec flattenRec acc cells score =
         match cells with
-        | [] -> acc
-        | [x] -> x::acc
+        | [] -> acc, score
+        | [x] -> x::acc, score
         | first::second::rest ->
-            if first = second then flattenRec ((first + second)::acc) rest
-            else flattenRec (first::acc) (second::rest)
+            if first = second then 
+                let total = first + second
+                flattenRec (total::acc) rest (score + total)
+            else flattenRec (first::acc) (second::rest) score
 
-    flattenRec [] cells
-    |> List.rev
+    let cells', score = flattenRec [] cells 0
+    List.rev cells', score
 
 let padList n value list =
     list@(List.replicate (n - List.length list) value)
@@ -96,24 +103,34 @@ let swipe direction board =
     let cellFolder rowOrCol cells (i, newVal) =
         Map.add (cellMapper rowOrCol i) newVal cells
 
-    let cellsFolder cells rowOrCol =
-        cells
-        |> Map.toList
-        |> List.where (snd >> (<) 0)
-        |> List.where (fst >> cellFilter rowOrCol)
-        |> List.map snd
-        |> (flatten >> cellSorter >> padList board.Size 0)
-        |> List.indexed
-        |> List.fold (cellFolder rowOrCol) cells
+    let cellsFolder board rowOrCol =
+        let flattened, score =
+            board.Cells
+            |> Map.toList
+            |> List.where (snd >> (<) 0)
+            |> List.where (fst >> cellFilter rowOrCol)
+            |> List.map snd
+            |> flatten
 
-    { board with Cells = List.fold cellsFolder board.Cells [1..board.Size]}
+        let flattened' =
+            flattened
+            |> cellSorter 
+            |> padList board.Size 0
+            |> List.indexed
+            |> List.fold (cellFolder rowOrCol) board.Cells
+        
+        { board with 
+            Cells = flattened'
+            Score = board.Score + score }
+
+    List.fold cellsFolder board [1..board.Size] 
 
 let trySwipe direction board =
     let newBoard = swipe direction board
     if board = newBoard then board
     else addRandomCell newBoard
 
-let anyCellsCanMove cells =
+let canAnyCellsMove cells =
     List.exists ((=) 0) cells 
     || cells
         |> List.pairwise
@@ -124,7 +141,7 @@ let canSwipeOrientation grouping board =
     |> Map.toList
     |> List.groupBy grouping
     |> List.map (snd >> List.map snd)
-    |> List.exists anyCellsCanMove
+    |> List.exists canAnyCellsMove
     
 let canSwipeHorizontal board =
     canSwipeOrientation (fun ({X = _; Y = y}, _) -> y) board

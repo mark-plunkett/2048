@@ -8,6 +8,8 @@ let dumpBoard origin board =
     Console.SetCursorPosition origin
     printfn "%s" (boardToString board)
     printfn ""
+    printfn "Score: %i" board.Score
+    printfn ""
 
 [<EntryPoint>]
 let main argv =
