@@ -20,9 +20,8 @@ let randomDir board =
     | x -> failwithf "Unsupported: %i" x
 
 let runMoves num board =
-    let board' = { board with RNG = Random() }
-    let directions = [ for _ in [1..num] do yield randomDir board' ]
-    let finalBoard = List.fold (fun board direction -> trySwipe direction board) board' directions
+    let directions = [ for _ in [1..num] do yield randomDir board ]
+    let finalBoard = List.fold (fun board direction -> trySwipe direction board) board directions
     {
         InitialDirection = directions.Head
         Score = finalBoard.Score
@@ -30,7 +29,7 @@ let runMoves num board =
 
 let generateNextDirection numBranches numMoves board =
     [1..numBranches]
-    |> PSeq.map (fun _ -> runMoves numMoves board)
+    |> PSeq.map (fun _ -> runMoves numMoves { board with RNG = Random() })
     |> Seq.toList
     |> Seq.groupBy (fun run -> run.InitialDirection)
     |> Seq.maxBy (snd >> Seq.averageBy (fun run -> float run.Score))
