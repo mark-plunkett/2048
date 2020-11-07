@@ -21,7 +21,7 @@ let main argv =
     let rec loop board =
         dumpBoard origin board |> ignore
         match canSwipe board with
-        | false -> printfn "Game over :("
+        | false -> printfn "Game over :(\n"
         | true -> 
             match Console.ReadKey().Key with
             | ConsoleKey.UpArrow -> trySwipe Up board
