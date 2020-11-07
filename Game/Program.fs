@@ -2,8 +2,10 @@
 
 open Game
 
+let origin = Console.WindowLeft, Console.WindowTop 
+
 let dumpBoard origin board =
-    Console.SetCursorPosition(origin.X, origin.Y)
+    Console.SetCursorPosition origin
     printfn "%s" (boardToString board)
     printfn ""
 
@@ -12,19 +14,9 @@ let main argv =
     let size = Array.tryHead argv |> Option.defaultValue "4" |> int
     let board = newBoard size
     let trySwipe direction board =
-        let canSwipe = 
-            match direction with
-            | Up | Down -> canSwipeVertical board
-            | Left | Right -> canSwipeHorizontal board
-        
-        match canSwipe with
-        | true -> Some (board |> swipe size direction |> addRandomCell)
-        | false -> None
-
-    let origin = {
-        X = Console.WindowLeft
-        Y = Console.WindowTop
-    }
+        let newBoard = swipe size direction board
+        if board = newBoard then board
+        else addRandomCell newBoard
 
     let rec loop board =
         dumpBoard origin board |> ignore
@@ -36,10 +28,8 @@ let main argv =
             | ConsoleKey.DownArrow -> trySwipe Down board
             | ConsoleKey.LeftArrow -> trySwipe Left board
             | ConsoleKey.RightArrow -> trySwipe Right board
-            | _ -> Some board
-            |> function
-                | Some b -> loop b
-                | None -> loop board
+            | _ -> board
+            |> loop
 
     loop board
 

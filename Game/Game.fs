@@ -96,20 +96,20 @@ let swipe size direction board =
     let cellFolder rowOrCol cells (i, newVal) =
         Map.add (cellMapper rowOrCol i) newVal cells
 
-    let cellsFolder board rowOrCol =
-        board
+    let cellsFolder cells rowOrCol =
+        cells
         |> Map.toList
         |> List.where (snd >> (<) 0)
         |> List.where (fst >> cellFilter rowOrCol)
         |> List.map snd
         |> (flatten >> cellSorter >> padList size 0)
         |> List.indexed
-        |> List.fold (cellFolder rowOrCol) board
+        |> List.fold (cellFolder rowOrCol) cells
 
     { board with Cells = List.fold cellsFolder board.Cells [1..size]}
 
-let cellsCanMove cells =
-    List.exists (fun value -> value = 0) cells
+let anyCellsCanMove cells =
+    List.exists ((=) 0) cells 
     || cells
         |> List.pairwise
         |> List.exists (fun (a, b) -> a = b)
@@ -119,7 +119,7 @@ let canSwipeOrientation grouping board =
     |> Map.toList
     |> List.groupBy grouping
     |> List.map (snd >> List.map snd)
-    |> List.exists cellsCanMove
+    |> List.exists anyCellsCanMove
     
 let canSwipeHorizontal board =
     canSwipeOrientation (fun ({X = _; Y = y}, _) -> y) board
