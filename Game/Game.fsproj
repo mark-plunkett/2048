@@ -11,5 +11,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Argu" Version="6.1.1" />
+    <PackageReference Include="FSharp.Collections.ParallelSeq" Version="1.1.4" />
   </ItemGroup>
 </Project>

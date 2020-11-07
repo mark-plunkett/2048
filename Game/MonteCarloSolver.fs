@@ -2,6 +2,8 @@ module MonteCarloSolver
 
 open System
 
+open FSharp.Collections.ParallelSeq
+
 open Game
 
 type Run = {
@@ -9,9 +11,8 @@ type Run = {
     Score: int
 }
 
-let random = Random()
-let randomDir () =
-    match random.Next(0, 4) with
+let randomDir board =
+    match board.RNG.Next(0, 4) with
     | 0 -> Up
     | 1 -> Down
     | 2 -> Left
@@ -19,8 +20,9 @@ let randomDir () =
     | x -> failwithf "Unsupported: %i" x
 
 let runMoves num board =
-    let directions = [ for _ in [1..num] do yield randomDir() ]
-    let finalBoard = List.fold (fun board direction -> trySwipe direction board) board directions
+    let board' = { board with RNG = Random() }
+    let directions = [ for _ in [1..num] do yield randomDir board' ]
+    let finalBoard = List.fold (fun board direction -> trySwipe direction board) board' directions
     {
         InitialDirection = directions.Head
         Score = finalBoard.Score
@@ -28,7 +30,8 @@ let runMoves num board =
 
 let generateNextDirection numBranches numMoves board =
     [1..numBranches]
-    |> List.map (fun _ -> runMoves numMoves board)
-    |> List.groupBy (fun run -> run.InitialDirection)
-    |> List.maxBy (snd >> List.averageBy (fun run -> float run.Score))
+    |> PSeq.map (fun _ -> runMoves numMoves board)
+    |> Seq.toList
+    |> Seq.groupBy (fun run -> run.InitialDirection)
+    |> Seq.maxBy (snd >> Seq.averageBy (fun run -> float run.Score))
     |> fst

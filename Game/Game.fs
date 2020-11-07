@@ -11,6 +11,7 @@ type Board = {
     Cells: Map<Position, int>
     Size: int
     Score: int
+    RNG: Random
 }
 
 type Direction = | Up | Down | Left | Right
@@ -28,19 +29,18 @@ let boardToString board =
                 | v -> sprintf "%5i" v
     ) newLine
 
-let r = Random()
 let randomPos board =
-    { X = r.Next(1, board.Size + 1); Y = r.Next(1, board.Size + 1) }
+    { X = board.RNG.Next(1, board.Size + 1); Y = board.RNG.Next(1, board.Size + 1) }
 
-let randomValue () =
-    pown 2 (r.Next(1, 3))
+let randomValue board =
+    pown 2 (board.RNG.Next(1, 3))
 
 let addRandomCell board =
     let rec addRec pos value board =
         match board.Cells.[pos] with
         | v when v = 0 -> { board with Cells = Map.add pos value board.Cells }
         | _ -> addRec (randomPos board) value board
-    let value = randomValue()
+    let value = randomValue board
     let pos = randomPos board
     addRec pos value board
 
@@ -54,6 +54,7 @@ let newBoard size =
         Cells = cells 
         Size = size
         Score = 0
+        RNG = Random()
     }
     |> addRandomCell
     |> addRandomCell
