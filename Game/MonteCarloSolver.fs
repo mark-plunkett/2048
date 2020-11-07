@@ -21,7 +21,7 @@ let randomDir board =
 
 let runMoves num board =
     let directions = [ for _ in [1..num] do yield randomDir board ]
-    let finalBoard = List.fold (fun board direction -> trySwipe direction board) board directions
+    let finalBoard = List.fold trySwipe board directions
     {
         InitialDirection = directions.Head
         Score = finalBoard.Score

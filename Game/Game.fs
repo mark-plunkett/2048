@@ -84,7 +84,7 @@ let flatten cells =
 let padList n value list =
     list@(List.replicate (n - List.length list) value)
 
-let swipe direction board =
+let swipe board direction =
     let cellFilter rowCol cellPos = 
         match direction with
         | Up | Down -> cellPos.X = rowCol
@@ -127,8 +127,8 @@ let swipe direction board =
 
     List.fold cellsFolder board [1..board.Size] 
 
-let trySwipe direction board =
-    let newBoard = swipe direction board
+let trySwipe board direction =
+    let newBoard = swipe board direction 
     if board = newBoard then board
     else addRandomCell newBoard
 

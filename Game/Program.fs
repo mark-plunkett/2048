@@ -34,8 +34,8 @@ let main argv =
         match canSwipe board with
         | false -> printfn "Game over :(\n"
         | true -> 
-            let direction = directionFactory board
-            trySwipe direction board
+            directionFactory board
+            |> trySwipe board
             |> loop
 
     loop board
