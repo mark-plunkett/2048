@@ -75,7 +75,7 @@ let flatten cells =
 let padList n value list =
     list@(List.replicate (n - List.length list) value)
 
-let swipe size direction board =
+let swipe direction board =
     let cellFilter rowCol cellPos = 
         match direction with
         | Up | Down -> cellPos.X = rowCol
@@ -84,9 +84,9 @@ let swipe size direction board =
     let cellMapper rowOrCol i =
         match direction with
         | Up -> {X = rowOrCol; Y = i + 1}
-        | Down -> {X = rowOrCol; Y = size - i}
+        | Down -> {X = rowOrCol; Y = board.Size - i}
         | Left -> {X = i + 1; Y = rowOrCol}
-        | Right -> {X = size - i; Y = rowOrCol}
+        | Right -> {X = board.Size - i; Y = rowOrCol}
 
     let cellSorter cells =
         match direction with
@@ -102,11 +102,16 @@ let swipe size direction board =
         |> List.where (snd >> (<) 0)
         |> List.where (fst >> cellFilter rowOrCol)
         |> List.map snd
-        |> (flatten >> cellSorter >> padList size 0)
+        |> (flatten >> cellSorter >> padList board.Size 0)
         |> List.indexed
         |> List.fold (cellFolder rowOrCol) cells
 
-    { board with Cells = List.fold cellsFolder board.Cells [1..size]}
+    { board with Cells = List.fold cellsFolder board.Cells [1..board.Size]}
+
+let trySwipe direction board =
+    let newBoard = swipe direction board
+    if board = newBoard then board
+    else addRandomCell newBoard
 
 let anyCellsCanMove cells =
     List.exists ((=) 0) cells 

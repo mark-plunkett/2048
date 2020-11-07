@@ -13,11 +13,6 @@ let dumpBoard origin board =
 let main argv =
     let size = Array.tryHead argv |> Option.defaultValue "4" |> int
     let board = newBoard size
-    let trySwipe direction board =
-        let newBoard = swipe size direction board
-        if board = newBoard then board
-        else addRandomCell newBoard
-
     let rec loop board =
         dumpBoard origin board |> ignore
         match canSwipe board with
