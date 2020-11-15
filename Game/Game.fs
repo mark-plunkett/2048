@@ -33,7 +33,7 @@ let randomPos board =
     { X = board.RNG.Next(1, board.Size + 1); Y = board.RNG.Next(1, board.Size + 1) }
 
 let randomValue board =
-    pown 2 (board.RNG.Next(1, 3))
+    if board.RNG.NextDouble() > 0.9 then 4 else 2
 
 let addRandomCell board =
     let rec addRec pos value board =
