@@ -1,13 +1,12 @@
 module Tests
 
 open System
+
 open Xunit
+open FsCheck
+open FsCheck.Xunit
 
-[<Fact>]
-let ``My test`` () =
-    Assert.True(true)
-
-let cellsCanMoveValues : obj[] seq =
+let canAnyCellsMoveValues : obj[] seq =
     seq {
         yield [| [0;0;0;0]; true |]
         yield [| [2;4;8;16]; false |]
@@ -17,7 +16,15 @@ let cellsCanMoveValues : obj[] seq =
         yield [| [2;4;2;0]; true |]
     }
 
-[<Theory; MemberData("cellsCanMoveValues")>]
+[<Theory; MemberData("canAnyCellsMoveValues")>]
 let ``canAnyCellsMove`` cells expected =
     let result = Game.canAnyCellsMove cells
     Assert.Equal(expected, result)
+
+[<Property>]
+let ``Game.flatten sum of cells same pre and post`` (cells: int list) =
+    List.sum cells = (Game.flatten cells |> fst |> List.sum)
+
+[<Property>]
+let ``Game.flatten two cells with same value should result in one value with twice the value`` cellValue =
+    List.replicate 2 cellValue |> Game.flatten |> fst = [cellValue * 2]
