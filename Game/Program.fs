@@ -1,12 +1,13 @@
 ﻿open System
 
-open Game
+open Common
+open MonteCarloSolver
 
 let origin = Console.WindowLeft, Console.WindowTop 
 
-let dumpBoard origin board =
+let dumpBoard origin (boardContext:BoardContext<_>) board =
     Console.SetCursorPosition origin
-    printfn "%s" (Board.toString board)
+    printfn "%s" (boardContext.ToString board)
     printfn ""
     printfn "Score: %i" board.Score
     printfn ""
@@ -23,21 +24,28 @@ let rec getKeyboardDirection board =
 let main argv =
     let argsParser = Argu.ArgumentParser.Create<Args.Args>(programName = "2048.exe")
     let args = argsParser.Parse argv
-    let board = 
-        Board.empty (args.GetResult(Args.Size, defaultValue = 4))
-        |> Board.init
+    let boardContext = {
+        TrySwipe = FastGame.trySwipe
+        Clone = FastGame.Board.clone
+        Create = FastGame.Board.create
+        CreateWithSeed = fun i j -> FastGame.Board.create i
+        CanSwipe = FastGame.canSwipe
+        ToString = FastGame.Board.toString
+    }
+
+    let board = boardContext.Create (args.GetResult(Args.Size, defaultValue = 4))
     let directionFactory =
         match args.TryGetResult(Args.MonteCarlo) with
-        | Some (branches, depth) -> MonteCarloSolver.genNextDir branches depth
+        | Some (branches, depth) -> MonteCarloSolver.genNextDir branches depth boardContext
         | None -> getKeyboardDirection
 
     let rec loop board =
-        dumpBoard origin board |> ignore
-        match canSwipe board with
+        dumpBoard origin boardContext board |> ignore
+        match boardContext.CanSwipe board with
         | false -> printfn "Game over :(\n"
         | true -> 
             directionFactory board
-            |> trySwipe board
+            |> boardContext.TrySwipe board
             |> loop
 
     loop board

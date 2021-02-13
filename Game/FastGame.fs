@@ -1,14 +1,14 @@
-module Game
+module FastGame
 
 open System
+open System.Collections.Generic
 
 open Common
 
 module Board =
-
     let empty size =
         {
-            Cells = Map.empty
+            Cells = Dictionary()
             Size = size
             Score = 0
             RNG = Random()
@@ -20,17 +20,22 @@ module Board =
             RNG = Random(seed)
             RNGSeed = Some seed }
 
-    let clone board =
-        match board.RNGSeed with
-        | Some s -> { board with RNG = Random(s) }
-        | None -> { board with RNG = Random() }
+    let clone (board:Board<Dictionary<Position, int>>) =
+        let random =
+            match board.RNGSeed with
+            | Some s -> Random(s)
+            | None -> Random()
+        { board with
+            Cells = Dictionary(board.Cells)
+            RNG = random }
 
-    let toString board =
+    let toString (board:Board<Dictionary<Position, int>>) =
         let newLine = Environment.NewLine
         board.Cells
-        |> Map.toSeq
-        |> Seq.sortBy (fun (pos, _) -> pos.Y, pos.X)
-        |> Seq.fold (fun acc (pos, cell) ->
+        |> Seq.sortBy (fun kvp -> kvp.Key.Y, kvp.Key.X)
+        |> Seq.fold (fun acc kvp ->
+            let pos =  kvp.Key
+            let cell = kvp.Value
             acc
                 + if pos.X = 1 && pos.Y > 1 then newLine + newLine else String.Empty
                 + match cell with
@@ -44,11 +49,14 @@ module Board =
     let randomValue board =
         if board.RNG.NextDouble() > 0.9 then 4 else 2
 
-    let addRandomCell (board:Board<Map<Position, int>>) =
-        let rec addRec pos value board =
-            match Map.find pos board.Cells with
-            | v when v = 0 -> { board with Cells = Map.add pos value board.Cells }
-            | _ -> addRec (randomPos board) value board
+    let addRandomCell (board:Board<Dictionary<Position, int>>) =
+        let rec addRec pos value (board:Board<Dictionary<Position, int>>) =
+            match board.Cells.[pos] with
+            | v when v = 0 -> 
+                board.Cells.[pos] <- value
+                board
+            | _ -> 
+                addRec (randomPos board) value board
         let value = randomValue board
         let pos = randomPos board
         addRec pos value board
@@ -57,8 +65,9 @@ module Board =
         let cells =
             [ for x in [1..board.Size] do
                 for y in [1..board.Size] do
-                    yield { X = x; Y = y }, 0 ]
-            |> Map.ofList
+                    yield { X = x; Y = y } ]
+            |> List.map (fun p -> KeyValuePair(p, 0))
+            |> fun ps -> Dictionary<Position, int>(ps)
         { board with Cells = cells }
         |> addRandomCell
         |> addRandomCell
@@ -108,48 +117,53 @@ let swipe board direction =
         | Up | Left -> cells
         | Down | Right -> List.rev cells
 
-    let cellFolder rowOrCol cells (i, newVal) =
-        Map.add (cellMapper rowOrCol i) newVal cells
+    let cellFolder rowOrCol (cells:Dictionary<Position, int>) (i, newVal) =
+        let pos = cellMapper rowOrCol i
+        cells.[pos] <- newVal
+        cells
 
-    let cellsFolder board rowOrCol =
+    let cellsFolder (board:Board<Dictionary<Position, int>>) rowOrCol =
         let flattened, score =
             board.Cells
-            |> Map.toList
-            |> List.where (snd >> (<) 0)
-            |> List.where (fst >> cellFilter rowOrCol)
-            |> List.map snd
+            |> Seq.toList
+            |> List.filter (fun kvp -> kvp.Value > 0 && (cellFilter rowOrCol kvp.Key))
+            |> List.map (fun kvp -> kvp.Value)
             |> flatten
 
-        let flattened' =
-            flattened
-            |> cellSorter 
-            |> padList board.Size 0
-            |> List.indexed
-            |> List.fold (cellFolder rowOrCol) board.Cells
-        
-        { board with 
-            Cells = flattened'
-            Score = board.Score + score }
+        flattened
+        |> cellSorter 
+        |> padList board.Size 0
+        |> List.indexed
+        |> List.fold (cellFolder rowOrCol) board.Cells
+        |> ignore
+    
+        { board with Score = board.Score + score }
 
     List.fold cellsFolder board [1..board.Size] 
 
-let trySwipe board direction =
-    let newBoard = swipe board direction 
-    if board = newBoard then board
+let trySwipe (board:Board<Dictionary<Position, int>>) direction =
+    let before = Array.zeroCreate board.Cells.Values.Count
+    board.Cells.Values.CopyTo(before, 0)
+    let newBoard = swipe board direction
+    let noChanges =
+        Seq.zip before newBoard.Cells.Values 
+        |> Seq.forall (fun (a, b) -> a = b)
+    if noChanges then board
     else Board.addRandomCell newBoard
 
 let canAnyCellsMove cells =
-    List.exists ((=) 0) cells 
+    Array.exists ((=) 0) cells 
     || cells
-        |> List.pairwise
-        |> List.exists (fun (a, b) -> a = b)
+        |> Array.pairwise
+        |> Array.exists (fun (a, b) -> a = b)
 
-let canSwipeOrientation grouping board =
+let canSwipeOrientation grouping (board:Board<Dictionary<Position, int>>) =
     board.Cells
-    |> Map.toList
-    |> List.groupBy grouping
-    |> List.map (snd >> List.map snd)
-    |> List.exists canAnyCellsMove
+    |> Seq.toArray
+    |> Array.map (fun kvp -> kvp.Key, kvp.Value)
+    |> Array.groupBy grouping
+    |> Array.map (snd >> Array.map snd)
+    |> Array.exists canAnyCellsMove
     
 let canSwipeHorizontal board =
     canSwipeOrientation (fun ({X = _; Y = y}, _) -> y) board

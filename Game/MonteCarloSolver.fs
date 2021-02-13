@@ -4,7 +4,7 @@ open System
 
 open FSharp.Collections.ParallelSeq
 
-open Game
+open Common
 
 type Run = {
     InitialDirection: Direction
@@ -19,25 +19,25 @@ let randomDir board =
     | 3 -> Right
     | x -> failwithf "Unsupported: %i" x
 
-let runMoves num board =
+let runMoves num context board =
     let directions = [ for _ in [1..num] do yield randomDir board ]
-    let finalBoard = List.fold trySwipe board directions
+    let finalBoard = List.fold (context.TrySwipe) board directions
     {
         InitialDirection = directions.Head
         Score = finalBoard.Score
     }
 
-let genNextDir numBranches numMoves board =
+let genNextDir numBranches numMoves context board =
     [1..numBranches]
-    |> Seq.map (fun _ -> runMoves numMoves (Board.clone board))
+    |> Seq.map (fun _ -> runMoves numMoves context (context.Clone board))
     |> Seq.toList
     |> Seq.groupBy (fun run -> run.InitialDirection)
     |> Seq.maxBy (snd >> Seq.averageBy (fun run -> float run.Score))
     |> fst
 
-let genNextDirPSeq numBranches numMoves board =
+let genNextDirPSeq numBranches numMoves context board =
     [1..numBranches]
-    |> PSeq.map (fun _ -> runMoves numMoves (Board.clone board))
+    |> PSeq.map (fun _ -> runMoves numMoves context (context.Clone board))
     |> Seq.toList
     |> Seq.groupBy (fun run -> run.InitialDirection)
     |> Seq.maxBy (snd >> Seq.averageBy (fun run -> float run.Score))

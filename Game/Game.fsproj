@@ -4,7 +4,9 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Common.fs" />
     <Compile Include="Game.fs" />
+    <Compile Include="FastGame.fs" />
     <Compile Include="MonteCarloSolver.fs" />
     <Compile Include="Args.fs" />
     <Compile Include="Program.fs" />
