@@ -5,8 +5,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common.fs" />
-    <Compile Include="Game.fs" />
-    <Compile Include="FastGame.fs" />
+    <Compile Include="GameFunctional.fs" />
+    <Compile Include="GameDict.fs" />
     <Compile Include="MonteCarloSolver.fs" />
     <Compile Include="Args.fs" />
     <Compile Include="Program.fs" />

@@ -7,6 +7,7 @@ open BenchmarkDotNet.Attributes
 open Common
 
 type Benchmarks () =
+
     let monteNumBranches = 100
     let monteNumMoves = 100
 
@@ -14,22 +15,22 @@ type Benchmarks () =
     let r = Random()
     let seed = r.Next()
 
-    let context = {
-        TrySwipe = Game.trySwipe
-        Clone = Game.Board.clone
-        Create = Game.Board.create
-        CreateWithSeed = fun size seed -> Game.Board.emptyWithSeed size seed |> Game.Board.init
-        CanSwipe = Game.canSwipe
-        ToString = Game.Board.toString
+    let contextFunctional = {
+        TrySwipe = GameFunctional.trySwipe
+        Clone = GameFunctional.Board.clone
+        Create = GameFunctional.Board.create
+        CreateWithSeed = fun size seed -> GameFunctional.Board.emptyWithSeed size seed |> GameFunctional.Board.init
+        CanSwipe = GameFunctional.canSwipe
+        ToString = GameFunctional.Board.toString
     }
 
-    let fastContext = {
-        TrySwipe = FastGame.trySwipe
-        Clone = FastGame.Board.clone
-        Create = FastGame.Board.create
-        CreateWithSeed = fun size seed -> FastGame.Board.emptyWithSeed size seed |> FastGame.Board.init
-        CanSwipe = FastGame.canSwipe
-        ToString = FastGame.Board.toString
+    let contextDict = {
+        TrySwipe = GameDict.trySwipe
+        Clone = GameDict.Board.clone
+        Create = GameDict.Board.create
+        CreateWithSeed = fun size seed -> GameDict.Board.emptyWithSeed size seed |> GameDict.Board.init
+        CanSwipe = GameDict.canSwipe
+        ToString = GameDict.Board.toString
     }
 
     let rec runLoop dirFactory numRuns context board =
@@ -45,24 +46,24 @@ type Benchmarks () =
 
     [<Benchmark>]
     member this.RunMovesSeq () =
-        let board = context.CreateWithSeed size seed
-        let dirFactory = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves context
-        runLoop dirFactory this.numRuns context board
+        let board = contextFunctional.CreateWithSeed size seed
+        let dirFactory = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves contextFunctional
+        runLoop dirFactory this.numRuns contextFunctional board
 
     [<Benchmark>]
     member this.RunMovesPSeq () =
-        let board = context.CreateWithSeed size seed
-        let dirFactory = MonteCarloSolver.genNextDirPSeq monteNumBranches monteNumMoves context
-        runLoop dirFactory this.numRuns context board
+        let board = contextFunctional.CreateWithSeed size seed
+        let dirFactory = MonteCarloSolver.genNextDirPSeq monteNumBranches monteNumMoves contextFunctional
+        runLoop dirFactory this.numRuns contextFunctional board
 
     [<Benchmark>]
     member this.RunMovesFastSeq () =
-        let board = fastContext.CreateWithSeed size seed
-        let dirFactory = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves fastContext
-        runLoop dirFactory this.numRuns fastContext board
+        let board = contextDict.CreateWithSeed size seed
+        let dirFactory = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves contextDict
+        runLoop dirFactory this.numRuns contextDict board
 
     [<Benchmark>]
     member this.RunMovesFastPSeq () =
-        let board = fastContext.CreateWithSeed size seed
-        let dirFactory = MonteCarloSolver.genNextDirPSeq monteNumBranches monteNumMoves fastContext
-        runLoop dirFactory this.numRuns fastContext board
+        let board = contextDict.CreateWithSeed size seed
+        let dirFactory = MonteCarloSolver.genNextDirPSeq monteNumBranches monteNumMoves contextDict
+        runLoop dirFactory this.numRuns contextDict board

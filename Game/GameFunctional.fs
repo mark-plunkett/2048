@@ -1,4 +1,4 @@
-module Game
+module GameFunctional
 
 open System
 
@@ -19,24 +19,6 @@ module Board =
         { empty size with
             RNG = Random(seed)
             RNGSeed = Some seed }
-
-    let clone board =
-        match board.RNGSeed with
-        | Some s -> { board with RNG = Random(s) }
-        | None -> { board with RNG = Random() }
-
-    let toString board =
-        let newLine = Environment.NewLine
-        board.Cells
-        |> Map.toSeq
-        |> Seq.sortBy (fun (pos, _) -> pos.Y, pos.X)
-        |> Seq.fold (fun acc (pos, cell) ->
-            acc
-                + if pos.X = 1 && pos.Y > 1 then newLine + newLine else String.Empty
-                + match cell with
-                    | 0 -> "    -"
-                    | v -> sprintf "%5i" v
-        ) newLine
 
     let randomPos board =
         { X = board.RNG.Next(1, board.Size + 1); Y = board.RNG.Next(1, board.Size + 1) }
@@ -65,7 +47,25 @@ module Board =
 
     let create = empty >> init
 
-    let fromList board =
+    let clone board =
+        match board.RNGSeed with
+        | Some s -> { board with RNG = Random(s) }
+        | None -> { board with RNG = Random() }
+
+    let toString board =
+        let newLine = Environment.NewLine
+        board.Cells
+        |> Map.toSeq
+        |> Seq.sortBy (fun (pos, _) -> pos.Y, pos.X)
+        |> Seq.fold (fun acc (pos, cell) ->
+            acc
+                + if pos.X = 1 && pos.Y > 1 then newLine + newLine else String.Empty
+                + match cell with
+                    | 0 -> "    -"
+                    | v -> sprintf "%5i" v
+        ) newLine
+    
+let fromList board =
         [ for y, row in List.indexed board do
             for x, cell in List.indexed row do
                 yield ({ X = x + 1; Y = y + 1}, cell) ]

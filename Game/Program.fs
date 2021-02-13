@@ -25,12 +25,12 @@ let main argv =
     let argsParser = Argu.ArgumentParser.Create<Args.Args>(programName = "2048.exe")
     let args = argsParser.Parse argv
     let boardContext = {
-        TrySwipe = FastGame.trySwipe
-        Clone = FastGame.Board.clone
-        Create = FastGame.Board.create
-        CreateWithSeed = fun i j -> FastGame.Board.create i
-        CanSwipe = FastGame.canSwipe
-        ToString = FastGame.Board.toString
+        TrySwipe = GameDict.trySwipe
+        Clone = GameDict.Board.clone
+        Create = GameDict.Board.create
+        CreateWithSeed = fun i j -> GameDict.Board.create i
+        CanSwipe = GameDict.canSwipe
+        ToString = GameDict.Board.toString
     }
 
     let board = boardContext.Create (args.GetResult(Args.Size, defaultValue = 4))

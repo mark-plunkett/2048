@@ -18,13 +18,13 @@ let canAnyCellsMoveValues : obj[] seq =
 
 [<Theory; MemberData("canAnyCellsMoveValues")>]
 let ``canAnyCellsMove`` cells expected =
-    let result = Game.canAnyCellsMove cells
+    let result = GameFunctional.canAnyCellsMove cells
     Assert.Equal(expected, result)
 
 [<Property>]
 let ``Game.flatten sum of cells same pre and post`` (cells: int list) =
-    List.sum cells = (Game.flatten cells |> fst |> List.sum)
+    List.sum cells = (GameFunctional.flatten cells |> fst |> List.sum)
 
 [<Property>]
 let ``Game.flatten two cells with same value should result in one value with twice the value`` cellValue =
-    List.replicate 2 cellValue |> Game.flatten |> fst = [cellValue * 2]
+    List.replicate 2 cellValue |> GameFunctional.flatten |> fst = [cellValue * 2]

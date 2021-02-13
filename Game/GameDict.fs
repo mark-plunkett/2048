@@ -1,4 +1,4 @@
-module FastGame
+module GameDict
 
 open System
 open System.Collections.Generic
@@ -6,6 +6,7 @@ open System.Collections.Generic
 open Common
 
 module Board =
+
     let empty size =
         {
             Cells = Dictionary()
@@ -19,29 +20,6 @@ module Board =
         { empty size with
             RNG = Random(seed)
             RNGSeed = Some seed }
-
-    let clone (board:Board<Dictionary<Position, int>>) =
-        let random =
-            match board.RNGSeed with
-            | Some s -> Random(s)
-            | None -> Random()
-        { board with
-            Cells = Dictionary(board.Cells)
-            RNG = random }
-
-    let toString (board:Board<Dictionary<Position, int>>) =
-        let newLine = Environment.NewLine
-        board.Cells
-        |> Seq.sortBy (fun kvp -> kvp.Key.Y, kvp.Key.X)
-        |> Seq.fold (fun acc kvp ->
-            let pos =  kvp.Key
-            let cell = kvp.Value
-            acc
-                + if pos.X = 1 && pos.Y > 1 then newLine + newLine else String.Empty
-                + match cell with
-                    | 0 -> "    -"
-                    | v -> sprintf "%5i" v
-        ) newLine
 
     let randomPos board =
         { X = board.RNG.Next(1, board.Size + 1); Y = board.RNG.Next(1, board.Size + 1) }
@@ -73,6 +51,29 @@ module Board =
         |> addRandomCell
 
     let create = empty >> init
+
+    let clone (board:Board<Dictionary<Position, int>>) =
+        let random =
+            match board.RNGSeed with
+            | Some s -> Random(s)
+            | None -> Random()
+        { board with
+            Cells = Dictionary(board.Cells)
+            RNG = random }
+
+    let toString (board:Board<Dictionary<Position, int>>) =
+        let newLine = Environment.NewLine
+        board.Cells
+        |> Seq.sortBy (fun kvp -> kvp.Key.Y, kvp.Key.X)
+        |> Seq.fold (fun acc kvp ->
+            let pos =  kvp.Key
+            let cell = kvp.Value
+            acc
+                + if pos.X = 1 && pos.Y > 1 then newLine + newLine else String.Empty
+                + match cell with
+                    | 0 -> "    -"
+                    | v -> sprintf "%5i" v
+        ) newLine
 
     let fromList board =
         [ for y, row in List.indexed board do
