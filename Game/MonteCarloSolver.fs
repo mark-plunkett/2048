@@ -27,9 +27,17 @@ let runMoves num board =
         Score = finalBoard.Score
     }
 
-let generateNextDirection numBranches numMoves board =
+let genNextDirSeq numBranches numMoves board =
     [1..numBranches]
-    |> PSeq.map (fun _ -> runMoves numMoves { board with RNG = Random() })
+    |> Seq.map (fun _ -> runMoves numMoves (Board.clone board))
+    |> Seq.toList
+    |> Seq.groupBy (fun run -> run.InitialDirection)
+    |> Seq.maxBy (snd >> Seq.averageBy (fun run -> float run.Score))
+    |> fst
+
+let genNextDirPSeq numBranches numMoves board =
+    [1..numBranches]
+    |> PSeq.map (fun _ -> runMoves numMoves (Board.clone board))
     |> Seq.toList
     |> Seq.groupBy (fun run -> run.InitialDirection)
     |> Seq.maxBy (snd >> Seq.averageBy (fun run -> float run.Score))

@@ -6,7 +6,7 @@ let origin = Console.WindowLeft, Console.WindowTop
 
 let dumpBoard origin board =
     Console.SetCursorPosition origin
-    printfn "%s" (boardToString board)
+    printfn "%s" (Board.toString board)
     printfn ""
     printfn "Score: %i" board.Score
     printfn ""
@@ -23,10 +23,12 @@ let rec getKeyboardDirection board =
 let main argv =
     let argsParser = Argu.ArgumentParser.Create<Args.Args>(programName = "2048.exe")
     let args = argsParser.Parse argv
-    let board = newBoard (args.GetResult(Args.Size, defaultValue = 4))
+    let board = 
+        Board.empty (args.GetResult(Args.Size, defaultValue = 4))
+        |> Board.init
     let directionFactory =
         match args.TryGetResult(Args.MonteCarlo) with
-        | Some (branches, depth) -> MonteCarloSolver.generateNextDirection branches depth
+        | Some (branches, depth) -> MonteCarloSolver.genNextDirSeq branches depth
         | None -> getKeyboardDirection
 
     let rec loop board =
