@@ -2,7 +2,7 @@
   "profiles": {
     "Game": {
       "commandName": "Project",
-      "commandLineArgs": "--montecarlo 1000 10"
+      "commandLineArgs": "--montecarlo 10 100"
     }
   }
 }

@@ -27,7 +27,7 @@ let runMoves num board =
         Score = finalBoard.Score
     }
 
-let genNextDirSeq numBranches numMoves board =
+let genNextDir numBranches numMoves board =
     [1..numBranches]
     |> Seq.map (fun _ -> runMoves numMoves (Board.clone board))
     |> Seq.toList

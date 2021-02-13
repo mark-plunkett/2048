@@ -18,15 +18,6 @@ type Board = {
 type Direction = | Up | Down | Left | Right
 
 module Board =
-    let emptyWithSeed size seed =
-        { 
-            Cells = Map.empty 
-            Size = size
-            Score = 0
-            RNG = Random(seed)
-            RNGSeed = Some seed
-        }
-
     let empty size =
         {
             Cells = Map.empty
@@ -36,6 +27,11 @@ module Board =
             RNGSeed = None
         } 
     
+    let emptyWithSeed size seed =
+        { empty size with
+            RNG = Random(seed)
+            RNGSeed = Some seed }
+
     let clone board =
         match board.RNGSeed with
         | Some s -> { board with RNG = Random(s) }

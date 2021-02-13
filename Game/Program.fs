@@ -28,7 +28,7 @@ let main argv =
         |> Board.init
     let directionFactory =
         match args.TryGetResult(Args.MonteCarlo) with
-        | Some (branches, depth) -> MonteCarloSolver.genNextDirSeq branches depth
+        | Some (branches, depth) -> MonteCarloSolver.genNextDir branches depth
         | None -> getKeyboardDirection
 
     let rec loop board =
