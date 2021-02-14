@@ -105,6 +105,20 @@ let canSwipeHorizontalData : obj[] seq =
             [ 0; 0; 0; 0 ] ]; 
             false;
         |]
+        yield [| [
+            [ 2; 4; 8; 8 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            true;
+        |]
+        yield [| [
+            [ 2; 4; 8; 16 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            false;
+        |]
     }
 [<Theory; MemberData(nameof canSwipeHorizontalData)>]
 let ``canSwipeHorizontal returns expected`` cells expected =
