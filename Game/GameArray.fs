@@ -20,18 +20,17 @@ module Board =
           0 128  16   4
     *)
 
-    let size = 4 // Fixed size for performance reasons
-    let boardSize = size * size
-    let empty (_:int) =
+    let boardSize size = size * size
+    let empty (size:int) =
         {
-            Cells = Array.zeroCreate<uint16> boardSize
+            Cells = Array.zeroCreate<uint16> <| boardSize size
             Size = size
             Score = 0
             RNG = Random()
             RNGSeed = None
         } 
     
-    let emptyWithSeed _ seed =
+    let emptyWithSeed size seed =
         { empty size with
             RNG = Random(seed)
             RNGSeed = Some seed }
@@ -50,7 +49,7 @@ module Board =
 
     let addRandomCell (board:Board<uint16[]>) =
         let rec addRec pos value (board:Board<uint16[]>) =
-            let i = posToIndex size pos
+            let i = posToIndex board.Size pos
             match board.Cells.[i] with
             | v when v = 0us -> 
                 board.Cells.[i] <- value
@@ -73,8 +72,8 @@ module Board =
             match board.RNGSeed with
             | Some s -> Random(s)
             | None -> Random()
-        let cells' = Array.zeroCreate boardSize
-        Array.blit board.Cells 0 cells' 0 boardSize
+        let cells' = Array.zeroCreate <| boardSize board.Size
+        Array.blit board.Cells 0 cells' 0 <| boardSize board.Size
         { board with
             Cells = cells'
             RNG = random }
@@ -85,7 +84,7 @@ module Board =
         |> Array.indexed
         |> Seq.fold (fun acc (i, v) ->
             acc
-                + if i % size = 0 then newLine + newLine else String.Empty
+                + if i % board.Size = 0 then newLine + newLine else String.Empty
                 + match v with
                     | 0us -> "    -"
                     | v -> sprintf "%5i" v
@@ -97,21 +96,40 @@ module Board =
         |> List.toArray
         |> Array.map uint16
 
-let flatten cells =
-    let rec flattenRec acc cells score =
-        match cells with
-        | [] -> acc, score
-        | [x] -> x::acc, score
-        | first::second::rest ->
-            if first = second then 
-                let total = first + second
-                flattenRec (total::acc) rest (score + total)
-            else flattenRec (first::acc) (second::rest) score
+let flattenRow length rowIndex (cells:uint16[]) =
+    let xyToIndex = Board.xyToIndex length 
+    let length' = length * (rowIndex + 1)
+    // process each row
+    for x = 0 to length - 2 do
+        // process each cell
+        let i = xyToIndex x rowIndex
+        let vi = cells.[i]
+        // find next non zero
+        let mutable j = i + 1
+        while j < length' && cells.[j] = 0us do
+            j <- j + 1
 
-    let cells', score = flattenRec [] cells 0
-    List.rev cells', score
+        if j < length' then
+            if vi = 0us then
+                let vj = cells.[j]
+                cells.[i] <- vj
+                cells.[j] <- 0us
+            elif cells.[i] = cells.[j] then
+                cells.[i] <- cells.[i] + cells.[j]
+                cells.[j] <- 0us
 
-let swipe board direction =
+let swipe (board:Board<uint16[]>) direction =
+    (*
+        transpose cells
+        merge rows
+        transpose back
+    *)
+    (*
+        use two pointers to move cells within row
+    *)
+    for rowIndex = 0 to board.Size - 1 do
+        flattenRow board.Size rowIndex board.Cells
+
     board
 
 let trySwipe (board:Board<uint16[]>) direction =
@@ -123,33 +141,30 @@ let canAnyCellsMove cells =
         |> Array.pairwise
         |> Array.exists (fun (a, b) -> a = b)
 
-let inline canSwipeRow (row:inref<ReadOnlySpan<uint16>>) =
+let inline canSwipeRow (rowRef:inref<ReadOnlySpan<uint16>>) =
     let mutable containsZero = false
     let mutable containsNonZero = false
     let mutable containsSpace = false
     let mutable containsPair = false
-    for i = 0 to row.Length - 1 do
-        if row.[i] = 0us then
+    for i = 0 to rowRef.Length - 1 do
+        if rowRef.[i] = 0us then
             containsZero <- true
 
-        if row.[i] > 0us then 
+        if rowRef.[i] > 0us then 
             containsNonZero <- true
             if containsZero then containsSpace <- true
-            if i < row.Length - 1 && row.[i] = row.[i + 1] then containsPair <- true
+            if i < rowRef.Length - 1 && rowRef.[i] = rowRef.[i + 1] then containsPair <- true
     
     containsPair || containsSpace
 
-let rec processRows (rowsRef:inref<ReadOnlySpan<uint16>>) i =
+let rec canSwipeRows size (rowsRef:inref<ReadOnlySpan<uint16>>) i =
     if i = -1 then false
     else
         let rows = &rowsRef
-        let slice = rows.Slice(i * Board.size, Board.size)
+        let slice = rows.Slice(i * size, size)
         if canSwipeRow &slice then true
-        else processRows &rowsRef (i - 1)
-
-let canSwipeHorizontal board =
-    let rows = ReadOnlySpan(board.Cells)
-    processRows &rows (Board.size - 1)
+        else canSwipeRows size &rowsRef (i - 1)
 
 let canSwipe board =
-    true
+    let rows = ReadOnlySpan(board.Cells)
+    canSwipeRows board.Size &rows (board.Size - 1)

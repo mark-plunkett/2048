@@ -23,14 +23,14 @@ let ``xyToIndex returns correct index`` size x y expected =
 
 [<Fact>]
 let ``randomPos always returns in bounds X and Y`` () =
-    let board = Board.empty 0
+    let board = Board.empty 4
     let randomPositions = List.map (fun _ -> Board.randomPos board) [0..1000]
     Assert.All (randomPositions, (fun p -> Assert.InRange(p.X, 0, 3)))
     Assert.All (randomPositions, (fun p -> Assert.InRange(p.Y, 0, 3)))
 
 [<Fact>]
 let ``create returns board with two non zero cells`` () =
-    let board = Board.create 0
+    let board = Board.create 4
     let nonZeros = board.Cells |> Array.filter (fun v -> v > 0us)
     Assert.Equal(2, nonZeros.Length)
 
@@ -122,25 +122,63 @@ let canSwipeHorizontalData : obj[] seq =
     }
 [<Theory; MemberData(nameof canSwipeHorizontalData)>]
 let ``canSwipeHorizontal returns expected`` cells expected =
-    let board = Board.create 0
+    let board = Board.create 4
     let board' = { board with Cells = cells |> Board.fromList }
-    let canSwipe = canSwipeHorizontal board'
+    let canSwipe = canSwipe board'
     Assert.Equal(expected, canSwipe)
 
-let canAnyCellsMoveValues : obj[] seq =
+let flattenRowValues : obj[] seq =
     seq {
-        yield [| [0;0;0;0]; true |]
-        yield [| [2;4;8;16]; false |]
-        yield [| [2;0;8;16]; true |]
-        yield [| [2;2;8;16]; true |]
-        yield [| [2;4;2;4]; false |]
-        yield [| [2;4;2;0]; true |]
+        yield [| [2;4;8;16]; [2;4;8;16] |]
+        yield [| [0;0;0;0]; [0;0;0;0] |]
+        yield [| [2;0;8;16]; [2;8;16;0] |]
+        yield [| [2;2;8;16]; [4;8;16;0] |]
+        yield [| [2;4;2;4]; [2;4;2;4] |]
+        yield [| [2;4;2;0]; [2;4;2;0] |]
+        yield [| [2;0;2;2]; [4;2;0;0] |]
     }
+[<Theory; MemberData(nameof flattenRowValues)>]
+let ``flattenRow works as expected`` row expected =
+    let row' = Board.fromList [row]
+    let expected' = Board.fromList [expected]
+    flattenRow row'.Length 0 row' 
+    // row' modified in place
+    Assert.Equal<uint16[]>(expected', row')
 
-//[<Theory; MemberData("canAnyCellsMoveValues")>]
-let ``canAnyCellsMove`` cells expected =
-    let result = GameFunctional.canAnyCellsMove cells
-    Assert.Equal(expected, result)
+let swipeData : obj[] seq =
+    seq {
+        yield 
+            [| [ 
+                [ 2; 2; 0; 0 ]
+                [ 2; 2; 0; 0 ]
+                [ 2; 2; 0; 0 ]
+                [ 2; 2; 0; 0 ] ];
+            [
+                [ 4; 0; 0; 0; ]
+                [ 4; 0; 0; 0; ]
+                [ 4; 0; 0; 0; ]
+                [ 4; 0; 0; 0; ]
+            ] |]
+        yield 
+            [| [ 
+                [ 2; 0; 2; 0 ]
+                [ 2; 2; 0; 2 ]
+                [ 2; 2; 0; 0 ]
+                [ 2; 0; 0; 0 ] ];
+            [
+                [ 4; 0; 0; 0; ]
+                [ 4; 2; 0; 0; ]
+                [ 4; 0; 0; 0; ]
+                [ 2; 0; 0; 0; ]
+            ] |]
+    }
+[<Theory; MemberData(nameof swipeData)>]
+let ``swipe correctly merges cells`` cells expected =
+    let board = Board.create 4
+    let expected = Board.fromList expected
+    let board' = { board with Cells = cells |> Board.fromList }
+    let result = swipe board' Left
+    Assert.Equal<uint16[]>(expected, result.Cells)
 
 //[<Property>]
 let ``Game.flatten sum of cells same pre and post`` (cells: int list) =
