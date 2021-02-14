@@ -123,8 +123,35 @@ let canAnyCellsMove cells =
         |> Array.pairwise
         |> Array.exists (fun (a, b) -> a = b)
 
+let inline canSwipeRow (row:inref<ReadOnlySpan<uint16>>) =
+    let mutable containsZero = false
+    let mutable containsNonZero = false
+    let mutable containsSpace = false
+    let mutable containsPair = false
+    for i = 0 to row.Length - 1 do
+        if row.[i] = 0us then
+            containsZero <- true
+
+        if row.[i] > 0us then 
+            containsNonZero <- true
+            if containsZero then containsSpace <- true
+            if i < row.Length - 1 && row.[i] = row.[i + 1] then containsPair <- true
+    
+    containsPair || containsSpace
+
+let rec processRows (rowsRef:inref<ReadOnlySpan<uint16>>) i =
+    match i with
+    | -1 -> 
+        false
+    | _ -> 
+        let rows = &rowsRef
+        let slice = rows.Slice(i * Board.size, Board.size)
+        if canSwipeRow &slice then true
+        else processRows &rowsRef (i - 1)
+
 let canSwipeHorizontal board =
-    false
+    let rows = ReadOnlySpan(board.Cells)
+    processRows &rows (Board.size - 1)
 
 let canSwipe board =
     true

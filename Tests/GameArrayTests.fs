@@ -47,19 +47,71 @@ let ``fromList returns 1 dimensional array with expected values`` () =
     let expected = [|1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16|] |> Array.map uint16
     Assert.Equal<uint16[]>(expected, cells')
 
-[<Fact>]
-let ``canSwipeHorizontal swipable board returns true`` () =
+let canSwipeHorizontalData : obj[] seq =
+    seq {
+        yield [| [
+            [ 0; 2; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            true;
+        |];
+        yield [| [
+            [ 2; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            false;
+        |]
+        yield [| [
+            [ 2; 2; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            true;
+        |]
+        yield [| [
+            [ 0; 0; 0; 0 ]
+            [ 2; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            false;
+        |]
+        yield [| [
+            [ 0; 0; 0; 0 ]
+            [ 2; 2; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            true;
+        |]
+        yield [| [
+            [ 2; 0; 0; 0 ]
+            [ 2; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            false;
+        |]
+        yield [| [
+            [ 0; 0; 0; 0 ]
+            [ 0; 2; 0; 2 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            true;
+        |]
+        yield [| [
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            false;
+        |]
+    }
+[<Theory; MemberData(nameof canSwipeHorizontalData)>]
+let ``canSwipeHorizontal returns expected`` cells expected =
     let board = Board.create 0
-    let cells = [
-        [ 2; 2; 0; 0 ]
-        [ 0; 0; 0; 0 ]
-        [ 0; 0; 0; 0 ]
-        [ 0; 0; 0; 0 ]
-    ]
-
     let board' = { board with Cells = cells |> Board.fromList }
     let canSwipe = canSwipeHorizontal board'
-    Assert.True(canSwipe)
+    Assert.Equal(expected, canSwipe)
 
 let canAnyCellsMoveValues : obj[] seq =
     seq {
