@@ -36,8 +36,11 @@ module Board =
             RNG = Random(seed)
             RNGSeed = Some seed }
 
+    let xyToIndex size x y =
+        size * y + x
+
     let posToIndex size pos =
-        size * pos.Y + pos.X
+        xyToIndex size pos.X pos.Y
 
     let randomPos board =
         { X = board.RNG.Next(0, board.Size); Y = board.RNG.Next(0, board.Size) }
@@ -89,12 +92,9 @@ module Board =
         ) newLine
 
     let fromList board =
-        [ for y, row in List.indexed board do
-            for x, cell in List.indexed row do
-                yield ({ X = x + 1; Y = y + 1}, cell) ]
-        |> List.fold (fun board (pos, cell) ->
-            Map.add pos cell board
-        ) Map.empty
+        board
+        |> List.collect id
+        |> List.toArray
 
 let flatten cells =
     let rec flattenRec acc cells score =
@@ -110,9 +110,6 @@ let flatten cells =
     let cells', score = flattenRec [] cells 0
     List.rev cells', score
 
-let padList n value list =
-    list@(List.replicate (n - List.length list) value)
-
 let swipe board direction =
     board
 
@@ -124,6 +121,9 @@ let canAnyCellsMove cells =
     || cells
         |> Array.pairwise
         |> Array.exists (fun (a, b) -> a = b)
+
+let canSwipeHorizontal board =
+    false
 
 let canSwipe board =
     true

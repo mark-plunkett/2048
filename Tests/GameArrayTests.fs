@@ -34,6 +34,35 @@ let ``create returns board with two non zero cells`` () =
     let nonZeros = board.Cells |> Array.filter (fun v -> v > 0us)
     Assert.Equal(2, nonZeros.Length)
 
+[<Fact>]
+let ``fromList returns 1 dimensional array with expected values`` () =
+    let cells = [
+        [ 1; 2; 3; 4 ]
+        [ 5; 6; 7; 8 ]
+        [ 9; 10; 11; 12 ]
+        [ 13; 14; 15; 16 ]
+    ]
+
+    let cells' = Board.fromList cells
+    Assert.Equal<int[]>([|1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16|], cells')
+
+let convertBoard (cells:int[]) =
+    Array.map uint16 cells
+
+[<Fact>]
+let ``canSwipeHorizontal swipable board returns true`` () =
+    let board = Board.create 0
+    let cells = [
+        [ 2; 2; 0; 0 ]
+        [ 0; 0; 0; 0 ]
+        [ 0; 0; 0; 0 ]
+        [ 0; 0; 0; 0 ]
+    ]
+
+    let board' = { board with Cells = cells |> Board.fromList |> convertBoard }
+    let canSwipe = canSwipeHorizontal board'
+    Assert.True(canSwipe)
+
 let canAnyCellsMoveValues : obj[] seq =
     seq {
         yield [| [0;0;0;0]; true |]
