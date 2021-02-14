@@ -11,14 +11,14 @@ open GameArray
 
 let posToIndexData : obj[] seq =
     seq {
-        yield [| 4; { X = 0; Y = 0 }; 0 |]
-        yield [| 4; { X = 2; Y = 0 }; 2 |]
-        yield [| 4; { X = 2; Y = 1 }; 6 |]
-        yield [| 4; { X = 3; Y = 3 }; 15 |]
+        yield [| 4; 0;0; 0 |]
+        yield [| 4; 2;0; 2 |]
+        yield [| 4; 2;1; 6 |]
+        yield [| 4; 3;3; 15 |]
     }
 [<Theory; MemberData(nameof posToIndexData)>]
-let ``posToIndex returns correct index`` size pos expected =
-    let i = Board.posToIndex size pos
+let ``xyToIndex returns correct index`` size x y expected =
+    let i = Board.xyToIndex size x y
     Assert.Equal(expected, i)
 
 [<Fact>]
@@ -44,7 +44,7 @@ let ``fromList returns 1 dimensional array with expected values`` () =
     ]
 
     let cells' = Board.fromList cells
-    let expected = [|1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16|] |> Array.map uint16
+    let expected = Array.map uint16 [|1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16|]
     Assert.Equal<uint16[]>(expected, cells')
 
 let canSwipeHorizontalData : obj[] seq =

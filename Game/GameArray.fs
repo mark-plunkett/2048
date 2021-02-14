@@ -140,10 +140,8 @@ let inline canSwipeRow (row:inref<ReadOnlySpan<uint16>>) =
     containsPair || containsSpace
 
 let rec processRows (rowsRef:inref<ReadOnlySpan<uint16>>) i =
-    match i with
-    | -1 -> 
-        false
-    | _ -> 
+    if i = -1 then false
+    else
         let rows = &rowsRef
         let slice = rows.Slice(i * Board.size, Board.size)
         if canSwipeRow &slice then true
