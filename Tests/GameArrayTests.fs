@@ -136,6 +136,7 @@ let flattenRowValues : obj[] seq =
         yield [| [2;4;2;4]; [2;4;2;4] |]
         yield [| [2;4;2;0]; [2;4;2;0] |]
         yield [| [2;0;2;2]; [4;2;0;0] |]
+        yield [| [0;0;0;2]; [2;0;0;0] |]
     }
 [<Theory; MemberData(nameof flattenRowValues)>]
 let ``flattenRow works as expected`` row expected =
