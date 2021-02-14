@@ -95,6 +95,7 @@ module Board =
         board
         |> List.collect id
         |> List.toArray
+        |> Array.map uint16
 
 let flatten cells =
     let rec flattenRec acc cells score =

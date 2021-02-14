@@ -44,10 +44,8 @@ let ``fromList returns 1 dimensional array with expected values`` () =
     ]
 
     let cells' = Board.fromList cells
-    Assert.Equal<int[]>([|1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16|], cells')
-
-let convertBoard (cells:int[]) =
-    Array.map uint16 cells
+    let expected = [|1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16|] |> Array.map uint16
+    Assert.Equal<uint16[]>(expected, cells')
 
 [<Fact>]
 let ``canSwipeHorizontal swipable board returns true`` () =
@@ -59,7 +57,7 @@ let ``canSwipeHorizontal swipable board returns true`` () =
         [ 0; 0; 0; 0 ]
     ]
 
-    let board' = { board with Cells = cells |> Board.fromList |> convertBoard }
+    let board' = { board with Cells = cells |> Board.fromList }
     let canSwipe = canSwipeHorizontal board'
     Assert.True(canSwipe)
 
