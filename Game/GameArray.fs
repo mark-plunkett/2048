@@ -36,18 +36,18 @@ module Board =
             RNG = Random(seed)
             RNGSeed = Some seed }
 
-    let posToIndex pos =
+    let posToIndex size pos =
         size * pos.Y + pos.X
 
     let randomPos board =
-        { X = board.RNG.Next(1, board.Size + 1); Y = board.RNG.Next(1, board.Size + 1) }
+        { X = board.RNG.Next(0, board.Size); Y = board.RNG.Next(0, board.Size) }
 
     let randomValue board =
         uint16 <| if board.RNG.NextDouble() > 0.9 then 4 else 2
 
     let addRandomCell (board:Board<uint16[]>) =
         let rec addRec pos value (board:Board<uint16[]>) =
-            let i = posToIndex pos
+            let i = posToIndex size pos
             match board.Cells.[i] with
             | v when v = 0us -> 
                 board.Cells.[i] <- value

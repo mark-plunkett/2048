@@ -1,4 +1,4 @@
-module Tests
+module GameFunctionalTests
 
 open System
 
