@@ -6,6 +6,7 @@ open BenchmarkDotNet.Attributes
 
 open Common
 
+[<MarkdownExporterAttribute.GitHub>]
 type Benchmarks () =
 
     let monteNumBranches = 100
@@ -27,37 +28,45 @@ type Benchmarks () =
     member val public numRuns = 0 with get, set
 
     [<Benchmark>]
-    member this.RunMovesFunctionalSeq () =
+    member this.FunctionalSeq () =
         let board = GameFunctional.boardContext.CreateWithSeed size seed
         let dirFactory = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameFunctional.boardContext
         runLoop dirFactory this.numRuns GameFunctional.boardContext board
 
     [<Benchmark>]
-    member this.RunMovesFunctionalPSeq () =
+    member this.FunctionalPSeq () =
         let board = GameFunctional.boardContext.CreateWithSeed size seed
         let dirFactory = MonteCarloSolver.genNextDirPSeq monteNumBranches monteNumMoves GameFunctional.boardContext
         runLoop dirFactory this.numRuns GameFunctional.boardContext board
 
     [<Benchmark>]
-    member this.RunMovesDictSeq () =
+    member this.DictSeq () =
         let board = GameDict.boardContext.CreateWithSeed size seed
         let dirFactory = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameDict.boardContext
         runLoop dirFactory this.numRuns GameDict.boardContext board
 
     [<Benchmark>]
-    member this.RunMovesDictPSeq () =
+    member this.DictPSeq () =
         let board = GameDict.boardContext.CreateWithSeed size seed
         let dirFactory = MonteCarloSolver.genNextDirPSeq monteNumBranches monteNumMoves GameDict.boardContext
         runLoop dirFactory this.numRuns GameDict.boardContext board
 
     [<Benchmark>]
-    member this.RunMovesArraySeq () =
+    member this.ArraySeq () =
         let board = GameArray.boardContext.CreateWithSeed size seed
         let dirFactory = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameArray.boardContext
         runLoop dirFactory this.numRuns GameArray.boardContext board
 
     [<Benchmark>]
-    member this.RunMovesArrayPSeq () =
+    member this.ArrayPSeq () =
         let board = GameArray.boardContext.CreateWithSeed size seed
         let dirFactory = MonteCarloSolver.genNextDirPSeq monteNumBranches monteNumMoves GameArray.boardContext
         runLoop dirFactory this.numRuns GameArray.boardContext board
+
+    [<Benchmark>]
+    member this.ArraySIMD () =
+        ()
+
+    [<Benchmark>]
+    member this.ArrayCUDAfy () =
+        ()
