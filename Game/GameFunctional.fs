@@ -159,3 +159,12 @@ let canSwipeVertical board =
 
 let canSwipe board =
     canSwipeVertical board || canSwipeHorizontal board
+
+let boardContext = {
+    TrySwipe = trySwipe
+    Clone = Board.clone
+    Create = Board.create
+    CreateWithSeed = fun size seed -> Board.emptyWithSeed size seed |> Board.init
+    CanSwipe = canSwipe
+    ToString = Board.toString
+}
