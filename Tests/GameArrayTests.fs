@@ -47,7 +47,7 @@ let ``fromList returns 1 dimensional array with expected values`` () =
     let expected = Array.map uint16 [|1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16|]
     Assert.Equal<uint16[]>(expected, cells')
 
-let canSwipeHorizontalData : obj[] seq =
+let canSwipeData : obj[] seq =
     seq {
         yield [| [
             [ 0; 2; 0; 0 ]
@@ -61,7 +61,7 @@ let canSwipeHorizontalData : obj[] seq =
             [ 0; 0; 0; 0 ]
             [ 0; 0; 0; 0 ]
             [ 0; 0; 0; 0 ] ]; 
-            false;
+            true;
         |]
         yield [| [
             [ 2; 2; 0; 0 ]
@@ -75,7 +75,7 @@ let canSwipeHorizontalData : obj[] seq =
             [ 2; 0; 0; 0 ]
             [ 0; 0; 0; 0 ]
             [ 0; 0; 0; 0 ] ]; 
-            false;
+            true;
         |]
         yield [| [
             [ 0; 0; 0; 0 ]
@@ -89,7 +89,7 @@ let canSwipeHorizontalData : obj[] seq =
             [ 2; 0; 0; 0 ]
             [ 0; 0; 0; 0 ]
             [ 0; 0; 0; 0 ] ]; 
-            false;
+            true;
         |]
         yield [| [
             [ 0; 0; 0; 0 ]
@@ -117,13 +117,27 @@ let canSwipeHorizontalData : obj[] seq =
             [ 0; 0; 0; 0 ]
             [ 0; 0; 0; 0 ]
             [ 0; 0; 0; 0 ] ]; 
+            true;
+        |]
+        yield [| [
+            [ 2; 4; 8; 16 ]
+            [ 4; 8; 16; 32 ]
+            [ 8; 16; 32; 64 ]
+            [ 16; 32; 64; 128 ] ]; 
             false;
         |]
+        yield [| [
+            [ 2; 4; 8; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            true;
+        |]
     }
-[<Theory; MemberData(nameof canSwipeHorizontalData)>]
-let ``canSwipeHorizontal returns expected`` cells expected =
+[<Theory; MemberData(nameof canSwipeData)>]
+let ``canSwipe returns expected`` cells expected =
     let board = Board.create 4
-    let board' = { board with Cells = cells |> Board.fromList }
+    let board' = { board with Cells = Board.fromList cells }
     let canSwipe = canSwipe board'
     Assert.Equal(expected, canSwipe)
 
@@ -137,6 +151,7 @@ let flattenRowValues : obj[] seq =
         yield [| [2;4;2;0]; [2;4;2;0] |]
         yield [| [2;0;2;2]; [4;2;0;0] |]
         yield [| [0;0;0;2]; [2;0;0;0] |]
+        yield [| [0;0;2;2]; [4;0;0;0] |]
     }
 [<Theory; MemberData(nameof flattenRowValues)>]
 let ``flattenRow works as expected`` row expected =
@@ -178,8 +193,71 @@ let ``swipe correctly merges cells`` cells expected =
     let board = Board.create 4
     let expected = Board.fromList expected
     let board' = { board with Cells = cells |> Board.fromList }
-    let result = swipe board' Left
-    Assert.Equal<uint16[]>(expected, result.Cells)
+    swipe board' Left |> ignore
+    Assert.Equal<uint16[]>(expected, board'.Cells)
+
+let rotateDirectionData : obj[] seq =
+    seq {
+        yield 
+            [| 
+                Direction.Down
+                [ 
+                [ 0; 0; 0; 0 ]
+                [ 0; 0; 0; 0 ]
+                [ 0; 2; 0; 0 ]
+                [ 0; 2; 0; 0 ] ];
+            [
+                [ 0; 0; 0; 0; ]
+                [ 2; 2; 0; 0; ]
+                [ 0; 0; 0; 0; ]
+                [ 0; 0; 0; 0; ]
+            ] |]
+        
+        yield 
+            [|
+                Direction.Up
+                [
+                [1; 2; 3; 4]
+                [5; 6; 7; 8]
+                [9; 10; 11; 12]
+                [13; 14; 15; 16]
+                ]
+                [
+                [4;8;12;16]
+                [3;7;11;15]
+                [2;6;10;14]
+                [1;5;9;13]
+                ]
+
+            |]
+        yield 
+            [|
+                Direction.Right
+                [
+                [1; 2; 3; 4]
+                [5; 6; 7; 8]
+                [9; 10; 11; 12]
+                [13; 14; 15; 16]
+                ]
+                [
+                [4;3;2;1]
+                [8;7;6;5]
+                [12;11;10;9]
+                [16;15;14;13]
+                ]
+
+            |]
+    }
+[<Theory; MemberData(nameof rotateDirectionData)>]
+let ``rotateDirection rotates cells`` direction cells expected =
+    let cells' = Board.fromList cells
+    let expected' = Board.fromList expected
+    rotateDirection cells' direction |> ignore
+    Assert.Equal<uint16>(expected', cells')
+
+[<Fact>]
+let ``simple use case produces correct board`` () =
+    ()
 
 //[<Property>]
 let ``Game.flatten sum of cells same pre and post`` (cells: int list) =

@@ -8,7 +8,7 @@ open Common
 module Board =
 
     (*
-        This board uses a 1 dimensional array 16 of uint16s e.g.
+        This board uses a 1 dimensional array of 16 uint16s e.g.
         
         [ 0; 2; 256; 4; 16; 2; 4; 0; 2; 8; 4; 2; 0; 128; 16; 4 ]
         
@@ -19,7 +19,6 @@ module Board =
           2   8   4   2 
           0 128  16   4
     *)
-
     let boardSize size = size * size
     let empty (size:int) =
         {
@@ -72,10 +71,8 @@ module Board =
             match board.RNGSeed with
             | Some s -> Random(s)
             | None -> Random()
-        let cells' = Array.zeroCreate <| boardSize board.Size
-        Array.blit board.Cells 0 cells' 0 <| boardSize board.Size
         { board with
-            Cells = cells'
+            Cells = Array.copy board.Cells
             RNG = random }
 
     let toString (board:Board<uint16[]>) =
@@ -100,7 +97,9 @@ let flattenRow length rowIndex (cells:uint16[]) =
     let xyToIndex = Board.xyToIndex length 
     let length' = length * (rowIndex + 1)
     // process each row
-    for x = 0 to length - 2 do
+    let mutable score = 0
+    let mutable x = 0
+    while x < length - 1 do
         // process each cell
         let i = xyToIndex x rowIndex
         let vi = cells.[i]
@@ -117,29 +116,61 @@ let flattenRow length rowIndex (cells:uint16[]) =
             elif cells.[i] = cells.[j] then
                 cells.[i] <- cells.[i] + cells.[j]
                 cells.[j] <- 0us
+                score <- score + int cells.[i]
+                x <- x + 1
+            else
+                x <- x + 1
+        else
+            x <- x + 1
+
+    score
+
+let anticlockwiseTransposeMap =    [| 3; 7; 11; 15; 2; 6; 10; 14; 1; 5; 9; 13; 0; 4; 8; 12 |]
+let clockwiseTransposeMap =  [| 12; 8; 4; 0; 13; 9; 5; 1; 14; 10; 6; 2; 15; 11; 7; 3 |]
+let flipTransposeMap = [| 3; 2; 1; 0; 7; 6; 5; 4; 11; 10; 9; 8; 15; 14; 13; 12 |]
+
+let rotate (cells:uint16[]) (map:int[]) =
+    let cellsCopy = Array.copy cells
+    for i = 0 to cells.Length - 1 do
+        cells.[map.[i]] <- cellsCopy.[i]
+
+let rotateDirection (cells:uint16[]) direction =
+    match direction with
+    | Left -> ()
+    | Right -> rotate cells flipTransposeMap
+    | Up -> rotate cells clockwiseTransposeMap
+    | Down -> rotate cells anticlockwiseTransposeMap
+
+let rotateOppositeDirection (cells:uint16[]) direction =
+    match direction with
+    | Left -> ()
+    | Right -> rotate cells flipTransposeMap
+    | Up -> rotate cells anticlockwiseTransposeMap
+    | Down -> rotate cells clockwiseTransposeMap
 
 let swipe (board:Board<uint16[]>) direction =
-    (*
-        transpose cells
-        merge rows
-        transpose back
-    *)
-    (*
-        use two pointers to move cells within row
-    *)
+    rotateDirection board.Cells direction
+    let mutable score = 0
     for rowIndex = 0 to board.Size - 1 do
-        flattenRow board.Size rowIndex board.Cells
+        score <- score + flattenRow board.Size rowIndex board.Cells
 
-    board
+    rotateOppositeDirection board.Cells direction
+    { board with Score = board.Score + score }
+
+let arraysEqual (a:uint16[]) (b:uint16[]) =
+    let mutable equal = true
+    for i = 0 to a.Length - 1 do
+        if a.[i] <> b.[i] then equal <- false
+
+    equal
 
 let trySwipe (board:Board<uint16[]>) direction =
-    board
-
-let canAnyCellsMove cells =
-    Array.exists ((=) 0) cells 
-    || cells
-        |> Array.pairwise
-        |> Array.exists (fun (a, b) -> a = b)
+    let origCells = Array.copy board.Cells
+    let board' = swipe board direction
+    if arraysEqual origCells board.Cells then
+        board
+    else
+        Board.addRandomCell board'
 
 let inline canSwipeRow (rowRef:inref<ReadOnlySpan<uint16>>) =
     let mutable containsZero = false
@@ -149,6 +180,7 @@ let inline canSwipeRow (rowRef:inref<ReadOnlySpan<uint16>>) =
     for i = 0 to rowRef.Length - 1 do
         if rowRef.[i] = 0us then
             containsZero <- true
+            if containsNonZero then containsSpace <- true
 
         if rowRef.[i] > 0us then 
             containsNonZero <- true
@@ -166,5 +198,19 @@ let rec canSwipeRows size (rowsRef:inref<ReadOnlySpan<uint16>>) i =
         else canSwipeRows size &rowsRef (i - 1)
 
 let canSwipe board =
-    let rows = ReadOnlySpan(board.Cells)
-    canSwipeRows board.Size &rows (board.Size - 1)
+    let hRows = ReadOnlySpan(board.Cells)
+    let canSwipeHorizontal = canSwipeRows board.Size &hRows (board.Size - 1)
+    rotate board.Cells clockwiseTransposeMap
+    let vRows = ReadOnlySpan(board.Cells)
+    let canSwipeVertical = canSwipeRows board.Size &vRows (board.Size - 1)
+    rotate board.Cells anticlockwiseTransposeMap
+    canSwipeHorizontal || canSwipeVertical
+
+let boardContext = {
+    TrySwipe = trySwipe
+    Clone = Board.clone
+    Create = Board.create
+    CreateWithSeed = fun i j -> Board.create i
+    CanSwipe = canSwipe
+    ToString = Board.toString
+}
