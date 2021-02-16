@@ -63,10 +63,10 @@ type Benchmarks () =
         let dirFactory = MonteCarloSolver.genNextDirPSeq monteNumBranches monteNumMoves GameArray.boardContext
         runLoop dirFactory this.numRuns GameArray.boardContext board
 
-    [<Benchmark>]
+    //[<Benchmark>]
     member this.ArraySIMD () =
         ()
 
-    [<Benchmark>]
+    //[<Benchmark>]
     member this.ArrayCUDAfy () =
         ()

@@ -1,7 +1,7 @@
 module GameArray
 
 open System
-open System.Collections.Generic
+open System.Numerics
 
 open Common
 
@@ -134,6 +134,13 @@ let rotate (cells:uint16[]) (map:int[]) =
     for i = 0 to cells.Length - 1 do
         cells.[map.[i]] <- cellsCopy.[i]
 
+let rotateCopy (cells:uint16[]) (map:int[]) =
+    let cellsCopy = Array.copy cells
+    for i = 0 to cells.Length - 1 do
+        cellsCopy.[map.[i]] <- cells.[i]
+    
+    cellsCopy
+
 let rotateDirection (cells:uint16[]) direction =
     match direction with
     | Left -> ()
@@ -158,11 +165,7 @@ let swipe (board:Board<uint16[]>) direction =
     { board with Score = board.Score + score }
 
 let arraysEqual (a:uint16[]) (b:uint16[]) =
-    let mutable equal = true
-    for i = 0 to a.Length - 1 do
-        if a.[i] <> b.[i] then equal <- false
-
-    equal
+    Vector.EqualsAll(Vector(a), Vector(b))
 
 let trySwipe (board:Board<uint16[]>) direction =
     let origCells = Array.copy board.Cells
@@ -200,10 +203,9 @@ let rec canSwipeRows size (rowsRef:inref<ReadOnlySpan<uint16>>) i =
 let canSwipe board =
     let hRows = ReadOnlySpan(board.Cells)
     let canSwipeHorizontal = canSwipeRows board.Size &hRows (board.Size - 1)
-    rotate board.Cells clockwiseTransposeMap
-    let vRows = ReadOnlySpan(board.Cells)
+    let rotated = rotateCopy board.Cells clockwiseTransposeMap
+    let vRows = ReadOnlySpan(rotated)
     let canSwipeVertical = canSwipeRows board.Size &vRows (board.Size - 1)
-    rotate board.Cells anticlockwiseTransposeMap
     canSwipeHorizontal || canSwipeVertical
 
 let boardContext = {
