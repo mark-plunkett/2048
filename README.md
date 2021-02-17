@@ -20,13 +20,14 @@ Intel Core i7-6700K CPU 4.00GHz (Skylake), 1 CPU, 8 logical and 4 physical cores
 
 ```
 
-|           Method | numRuns |      Mean |    Error |    StdDev |
-|----------------- |-------- |----------:|---------:|----------:|
-|    FunctionalSeq |      10 | 874.01 ms | 3.795 ms |  3.364 ms |
-|   FunctionalPSeq |      10 | 369.90 ms | 6.789 ms | 10.962 ms |
-|          DictSeq |      10 | 392.13 ms | 2.829 ms |  2.508 ms |
-|         DictPSeq |      10 | 166.81 ms | 3.157 ms |  3.100 ms |
-|         ArraySeq |      10 |  55.03 ms | 0.372 ms |  0.311 ms |
-|        ArrayPSeq |      10 |  17.45 ms | 0.061 ms |  0.051 ms |
-|        ArraySIMD |      10 |      TODO |     TODO |      TODO |
-|      ArrayCUDAfy |      10 |      TODO |     TODO |      TODO |
+|         Method | numRuns |      Mean |     Error |    StdDev |
+|--------------- |-------- |----------:|----------:|----------:|
+|  FunctionalSeq |       1 | 97.423 ms | 1.8068 ms | 1.6017 ms |
+| FunctionalPSeq |       1 | 37.807 ms | 0.4686 ms | 0.4154 ms |
+|        DictSeq |       1 | 41.006 ms | 0.6326 ms | 0.5918 ms |
+|       DictPSeq |       1 | 17.106 ms | 0.1348 ms | 0.1261 ms |
+|       ArraySeq |       1 |  9.583 ms | 0.1644 ms | 0.1538 ms |
+|      ArrayPSeq |       1 |  3.358 ms | 0.0334 ms | 0.0313 ms |
+|           SIMD |       1 |  4.999 ms | 0.0858 ms | 0.0802 ms |
+|       SIMDPSeq |       1 |  1.584 ms | 0.0068 ms | 0.0064 ms |
+|         CUDAfy |       - |      TODO |      TODO |      TODO |
