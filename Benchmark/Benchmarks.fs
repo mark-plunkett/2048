@@ -24,7 +24,7 @@ type Benchmarks () =
             |> context.TrySwipe board
             |> runLoop dirFactory (numRuns - 1) context
 
-    [<Params(10)>]
+    [<Params(1)>]
     member val public numRuns = 0 with get, set
 
     [<Benchmark>]
@@ -63,10 +63,14 @@ type Benchmarks () =
         let dirFactory = MonteCarloSolver.genNextDirPSeq monteNumBranches monteNumMoves GameArray.boardContext
         runLoop dirFactory this.numRuns GameArray.boardContext board
 
-    //[<Benchmark>]
-    member this.ArraySIMD () =
-        ()
+    [<Benchmark>]
+    member this.SIMD () =
+        let board = GameSIMD.boardContext.CreateWithSeed size seed
+        let dirFactory = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameSIMD.boardContext
+        runLoop dirFactory this.numRuns GameSIMD.boardContext board
 
-    //[<Benchmark>]
-    member this.ArrayCUDAfy () =
-        ()
+    [<Benchmark>]
+    member this.SIMDPSeq () =
+        let board = GameSIMD.boardContext.CreateWithSeed size seed
+        let dirFactory = MonteCarloSolver.genNextDirPSeq monteNumBranches monteNumMoves GameSIMD.boardContext
+        runLoop dirFactory this.numRuns GameSIMD.boardContext board

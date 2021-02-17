@@ -1,6 +1,8 @@
 
 # SIMD algo
 
+## 1 "row" example
+
 |#| Data | Step |
 |-|-|-|
 |1| [ 2 4 4 0 ] 0 | Padded with zero for shift |

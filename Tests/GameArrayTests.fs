@@ -31,7 +31,7 @@ let ``randomPos always returns in bounds X and Y`` () =
 [<Fact>]
 let ``create returns board with two non zero cells`` () =
     let board = Board.create 4
-    let nonZeros = board.Cells |> Array.filter (fun v -> v > 0us)
+    let nonZeros = board.Cells |> Array.filter (fun v -> v > 0s)
     Assert.Equal(2, nonZeros.Length)
 
 [<Fact>]
@@ -44,8 +44,8 @@ let ``fromList returns 1 dimensional array with expected values`` () =
     ]
 
     let cells' = Board.fromList cells
-    let expected = Array.map uint16 [|1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16|]
-    Assert.Equal<uint16[]>(expected, cells')
+    let expected = Array.map int16 [|1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16|]
+    Assert.Equal<int16[]>(expected, cells')
 
 let canSwipeData : obj[] seq =
     seq {
@@ -159,7 +159,7 @@ let ``flattenRow works as expected`` row expected =
     let expected' = Board.fromList [expected]
     flattenRow row'.Length 0 row' 
     // row' modified in place
-    Assert.Equal<uint16[]>(expected', row')
+    Assert.Equal<int16[]>(expected', row')
 
 let swipeData : obj[] seq =
     seq {
@@ -194,7 +194,7 @@ let ``swipe correctly merges cells`` cells expected =
     let expected = Board.fromList expected
     let board' = { board with Cells = cells |> Board.fromList }
     swipe board' Left |> ignore
-    Assert.Equal<uint16[]>(expected, board'.Cells)
+    Assert.Equal<int16[]>(expected, board'.Cells)
 
 let rotateDirectionData : obj[] seq =
     seq {
@@ -253,7 +253,7 @@ let ``rotateDirection rotates cells`` direction cells expected =
     let cells' = Board.fromList cells
     let expected' = Board.fromList expected
     rotateDirection cells' direction |> ignore
-    Assert.Equal<uint16>(expected', cells')
+    Assert.Equal<int16>(expected', cells')
 
 [<Fact>]
 let ``simple use case produces correct board`` () =

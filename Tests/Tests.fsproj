@@ -10,6 +10,7 @@
   <ItemGroup>
     <Compile Include="GameFunctionalTests.fs" />
     <Compile Include="GameArrayTests.fs" />
+    <Compile Include="GameSIMDTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

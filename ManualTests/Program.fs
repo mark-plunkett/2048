@@ -1,14 +1,12 @@
 open System
 open System.Numerics
 
-open GameArray
-
 [<EntryPoint>]
 let main argv =
 
-    let a = [| 2; 2; 4; 4; 0; 0; 0; 0 |]
-    let va = Vector(a)
-    let vb = Vector(a, 1)
-
+    let i = [[2;4;8;16;16;0;0;0;0;0;0;0;0;0;0;0;]] |> GameSIMD.Board.fromList
+    let expected = [[2;4;8;16;16;0;0;0;0;0;0;0;0;0;0;0;]] |> GameSIMD.Board.fromList
+    
+    GameSIMD.swipeSIMD i |> ignore
 
     0
