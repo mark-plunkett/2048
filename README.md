@@ -8,6 +8,10 @@ Since the solver is CPU bound, it's performance is heavily affected by the choic
 
 The project is an excuse to try various (micro) optimization techniques, and is a work-in-progress.
 
+## Test
+
+Each test run of the solver spawns 100 branches of the game from its current state, and plays 100 moves forward on each. This results in a total of 10,000 moves per run. The Mean time is the average time it takes to execute these 10,000 moves for each implementation.
+
 ## Results
 
 ``` ini
