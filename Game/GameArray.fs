@@ -1,7 +1,6 @@
 module GameArray
 
 open System
-open System.Numerics
 
 open Common
 
@@ -164,8 +163,12 @@ let swipe (board:Board<uint16[]>) direction =
     rotateOppositeDirection board.Cells direction
     { board with Score = board.Score + score }
 
-let arraysEqual (a:uint16[]) (b:uint16[]) =
-    Vector.EqualsAll(Vector(a), Vector(b))
+let arraysEqual (a:_[]) (b:_[]) =
+    let mutable equal = true
+    for i = 0 to a.Length - 1 do
+        if a.[i] <> b.[i] then equal <- false
+
+    equal
 
 let trySwipe (board:Board<uint16[]>) direction =
     let origCells = Array.copy board.Cells
