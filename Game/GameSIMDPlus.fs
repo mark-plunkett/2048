@@ -67,8 +67,23 @@ let rotate (cells:int16[]) (map:int[]) =
     let cellsCopy = boardPool.Rent()
     try
         Array.blit cells 0 cellsCopy 0 cells.Length
-        for i = 0 to 15 do
-            cells.[map.[i] + 1] <- cellsCopy.[i + 1]
+        cells.[map.[0] + 1] <- cellsCopy.[1]
+        cells.[map.[1] + 1] <- cellsCopy.[2]
+        cells.[map.[2] + 1] <- cellsCopy.[3]
+        cells.[map.[3] + 1] <- cellsCopy.[4]
+        cells.[map.[4] + 1] <- cellsCopy.[5]
+        cells.[map.[5] + 1] <- cellsCopy.[6]
+        cells.[map.[6] + 1] <- cellsCopy.[7]
+        cells.[map.[7] + 1] <- cellsCopy.[8]
+        cells.[map.[8] + 1] <- cellsCopy.[9]
+        cells.[map.[9] + 1] <- cellsCopy.[10]
+        cells.[map.[10] + 1] <- cellsCopy.[11]
+        cells.[map.[11] + 1] <- cellsCopy.[12]
+        cells.[map.[12] + 1] <- cellsCopy.[13]
+        cells.[map.[13] + 1] <- cellsCopy.[14]
+        cells.[map.[14] + 1] <- cellsCopy.[15]
+        cells.[map.[15] + 1] <- cellsCopy.[16]
+
     finally
         boardPool.Return(cellsCopy)
 
@@ -95,20 +110,25 @@ let rotateOppositeDirection (cells:int16[]) direction =
 
 let swipe (board:Board<int16[]>) direction =
     rotateDirection board.Cells direction
-    let score =
-        GameSIMD.pack board.Cells
-        |> swipeSIMD
+    GameSIMD.pack board.Cells |> ignore
+    let score = swipeSIMD board.Cells
     GameSIMD.pack board.Cells |> ignore
     rotateOppositeDirection board.Cells direction
     { board with Score = board.Score + int score }
 
 let trySwipe (board:Board<int16[]>) direction =
-    let origCells = Array.copy board.Cells
-    let board' = swipe board direction
-    if GameSIMD.arraysEqual origCells board.Cells then
-        board
-    else
-        Board.addRandomCell board'
+    let origCells = boardPool.Rent()
+    try
+        for i = 1 to 16 do
+            origCells.[i] <- board.Cells.[i]
+
+        let board' = swipe board direction
+        if GameSIMD.arraysEqual origCells board.Cells then
+            board
+        else
+            Board.addRandomCell board'
+    finally
+        boardPool.Return(origCells)
 
 let canSwipe board =
     let hRows = ReadOnlySpan(board.Cells, 1, 16)
