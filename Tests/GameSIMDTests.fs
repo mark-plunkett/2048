@@ -52,6 +52,107 @@ let ``pack tests`` input expected =
         |> pack
     Assert.Equal<int16>(Array.map int16 expected, result)
 
+let canSwipeData : obj[] seq =
+    seq {
+        yield [| [
+            [ 0; 2; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            true;
+        |];
+        yield [| [
+            [ 2; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            true;
+        |]
+        yield [| [
+            [ 2; 2; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            true;
+        |]
+        yield [| [
+            [ 0; 0; 0; 0 ]
+            [ 2; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            true;
+        |]
+        yield [| [
+            [ 0; 0; 0; 0 ]
+            [ 2; 2; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            true;
+        |]
+        yield [| [
+            [ 2; 0; 0; 0 ]
+            [ 2; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            true;
+        |]
+        yield [| [
+            [ 0; 0; 0; 0 ]
+            [ 0; 2; 0; 2 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            true;
+        |]
+        yield [| [
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            false;
+        |]
+        yield [| [
+            [ 2; 4; 8; 8 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            true;
+        |]
+        yield [| [
+            [ 2; 4; 8; 16 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            true;
+        |]
+        yield [| [
+            [ 2; 4; 8; 16 ]
+            [ 4; 8; 16; 32 ]
+            [ 8; 16; 32; 64 ]
+            [ 16; 32; 64; 128 ] ]; 
+            false;
+        |]
+        yield [| [
+            [ 2; 4; 8; 16 ]
+            [ 4; 8; 16; 32 ]
+            [ 16; 4; 32; 64 ]
+            [ 16; 32; 64; 128 ] ]; 
+            true;
+        |]
+        yield [| [
+            [ 2; 4; 8; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ]
+            [ 0; 0; 0; 0 ] ]; 
+            true;
+        |]
+    }
+[<Theory; MemberData(nameof canSwipeData)>]
+let ``canSwipe returns expected`` cells expected =
+    let board = Board.create 4
+    let board' = { board with Cells = Board.fromList cells }
+    let canSwipe = canSwipe board'
+    Assert.Equal(expected, canSwipe)
+
 let swipeSIMDData : obj[] seq =
     seq {
         yield [| 

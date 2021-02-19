@@ -84,7 +84,6 @@ let vIgnoreMatchIndicies = Vector([|
 let swipeSIMD (cells:int16[]) =
     let vOrig = Vector(cells, 1)
     let vLShift = Vector(cells, 2)
-    // todo: remove last index of each row from matches
     let vMatches = Vector.BitwiseAnd(vIgnoreMatchIndicies, Vector.Equals(vOrig, vLShift))
     let vOrigMatches = Vector.ConditionalSelect(vMatches, vOrig, Vector<int16>.Zero)
     let vDoubleOrigMatches = Vector.Multiply(Vector(2s), vOrigMatches)
@@ -98,8 +97,7 @@ let swipeSIMD (cells:int16[]) =
     vDoubleOrigMatches.CopyTo(scores)
     let mutable score = 0s
     for i = 0 to scores.Length - 1 do
-        if scores.[i] > 0s then
-            score <- score + scores.[i]
+        score <- score + scores.[i]
     
     score
 
@@ -171,7 +169,7 @@ let canSwipe board =
     let hRows = ReadOnlySpan(board.Cells, 1, 16)
     let canSwipeHorizontal = GameArray.canSwipeRows board.Size &hRows (board.Size - 1)
     let rotated = rotateCopy board.Cells GameArray.clockwiseTransposeMap
-    let vRows = ReadOnlySpan(rotated)
+    let vRows = ReadOnlySpan(rotated, 1, 16)
     let canSwipeVertical = GameArray.canSwipeRows board.Size &vRows (board.Size - 1)
     canSwipeHorizontal || canSwipeVertical
 
