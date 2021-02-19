@@ -123,10 +123,8 @@ let trySwipe (board:Board<int16[]>) direction =
             origCells.[i] <- board.Cells.[i]
 
         let board' = swipe board direction
-        if GameSIMD.arraysEqual origCells board.Cells then
-            board
-        else
-            Board.addRandomCell board'
+        if GameSIMD.arraysEqual origCells board.Cells then board
+        else Board.addRandomCell board'
     finally
         boardPool.Return(origCells)
 
