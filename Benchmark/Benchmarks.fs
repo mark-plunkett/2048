@@ -6,8 +6,11 @@ open BenchmarkDotNet.Attributes
 
 open Common
 
+[<MemoryDiagnoser>]
 [<MarkdownExporterAttribute.GitHub>]
 type Benchmarks () =
+
+    let numRuns = 1
 
     let monteNumBranches = 100
     let monteNumMoves = 100
@@ -24,53 +27,62 @@ type Benchmarks () =
             |> context.TrySwipe board
             |> runLoop dirFactory (numRuns - 1) context
 
-    [<Params(1)>]
-    member val public numRuns = 0 with get, set
-
-    [<Benchmark>]
+    //[<Benchmark>]
     member this.FunctionalSeq () =
         let board = GameFunctional.boardContext.CreateWithSeed size seed
         let dirFactory = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameFunctional.boardContext
-        runLoop dirFactory this.numRuns GameFunctional.boardContext board
+        runLoop dirFactory numRuns GameFunctional.boardContext board
 
-    [<Benchmark>]
+    //[<Benchmark>]
     member this.FunctionalPSeq () =
         let board = GameFunctional.boardContext.CreateWithSeed size seed
         let dirFactory = MonteCarloSolver.genNextDirPSeq monteNumBranches monteNumMoves GameFunctional.boardContext
-        runLoop dirFactory this.numRuns GameFunctional.boardContext board
+        runLoop dirFactory numRuns GameFunctional.boardContext board
 
     [<Benchmark>]
     member this.DictSeq () =
         let board = GameDict.boardContext.CreateWithSeed size seed
         let dirFactory = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameDict.boardContext
-        runLoop dirFactory this.numRuns GameDict.boardContext board
+        runLoop dirFactory numRuns GameDict.boardContext board
 
-    [<Benchmark>]
+    //[<Benchmark>]
     member this.DictPSeq () =
         let board = GameDict.boardContext.CreateWithSeed size seed
         let dirFactory = MonteCarloSolver.genNextDirPSeq monteNumBranches monteNumMoves GameDict.boardContext
-        runLoop dirFactory this.numRuns GameDict.boardContext board
+        runLoop dirFactory numRuns GameDict.boardContext board
 
     [<Benchmark>]
     member this.ArraySeq () =
         let board = GameArray.boardContext.CreateWithSeed size seed
         let dirFactory = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameArray.boardContext
-        runLoop dirFactory this.numRuns GameArray.boardContext board
+        runLoop dirFactory numRuns GameArray.boardContext board
 
-    [<Benchmark>]
+    //[<Benchmark>]
     member this.ArrayPSeq () =
         let board = GameArray.boardContext.CreateWithSeed size seed
         let dirFactory = MonteCarloSolver.genNextDirPSeq monteNumBranches monteNumMoves GameArray.boardContext
-        runLoop dirFactory this.numRuns GameArray.boardContext board
+        runLoop dirFactory numRuns GameArray.boardContext board
 
     [<Benchmark>]
     member this.SIMD () =
         let board = GameSIMD.boardContext.CreateWithSeed size seed
         let dirFactory = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameSIMD.boardContext
-        runLoop dirFactory this.numRuns GameSIMD.boardContext board
+        runLoop dirFactory numRuns GameSIMD.boardContext board
 
-    [<Benchmark>]
+    //[<Benchmark>]
     member this.SIMDPSeq () =
         let board = GameSIMD.boardContext.CreateWithSeed size seed
         let dirFactory = MonteCarloSolver.genNextDirPSeq monteNumBranches monteNumMoves GameSIMD.boardContext
-        runLoop dirFactory this.numRuns GameSIMD.boardContext board
+        runLoop dirFactory numRuns GameSIMD.boardContext board
+
+    [<Benchmark>]
+    member this.SIMDPlus () =
+        let board = GameSIMDPlus.boardContext.CreateWithSeed size seed
+        let dirFactory = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameSIMDPlus.boardContext
+        runLoop dirFactory numRuns GameSIMDPlus.boardContext board
+
+    //[<Benchmark>]
+    member this.SIMDPlusPSeq () =
+        let board = GameSIMDPlus.boardContext.CreateWithSeed size seed
+        let dirFactory = MonteCarloSolver.genNextDirPSeq monteNumBranches monteNumMoves GameSIMDPlus.boardContext
+        runLoop dirFactory numRuns GameSIMDPlus.boardContext board

@@ -9,6 +9,7 @@
     <Compile Include="GameDict.fs" />
     <Compile Include="GameArray.fs" />
     <Compile Include="GameSIMD.fs" />
+    <Compile Include="GameSIMDPlus.fs" />
     <Compile Include="MonteCarloSolver.fs" />
     <Compile Include="Args.fs" />
     <Compile Include="Program.fs" />

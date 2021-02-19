@@ -215,7 +215,7 @@ let boardContext = {
     TrySwipe = trySwipe
     Clone = Board.clone
     Create = Board.create
-    CreateWithSeed = fun i j -> Board.create i
+    CreateWithSeed = fun i j -> Board.emptyWithSeed i j |> Board.init
     CanSwipe = canSwipe
     ToString = Board.toString
 }
