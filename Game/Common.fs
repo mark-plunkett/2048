@@ -11,7 +11,7 @@ type Board<'t> = {
     Cells: 't
     Size: int
     Score: int
-    RNG: Random
+    RNG: Tedd.RandomUtils.FastRandom
     RNGSeed: int option
 }
 
