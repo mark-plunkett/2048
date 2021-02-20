@@ -43,7 +43,7 @@ The board state consists of 16 cells, these are stored in a 1-dimensional array 
 
 Instead of the full board, the steps below use a board with two rows (8 values) bookended with -1s. Values within square brackets indicate values used in each vector operation.
 
-|#| Data &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  | Step |
+|#| Data                                          | Step |
 |-|-|-|
 |1| `-1 [ 2 4 4 8 8 0 0 0 ] -1` | Game state bookended with -1s for shift |
 |2|  `2 [ 4 4 8 8 0 0 0 -1 ]` | Shift left |
