@@ -1,5 +1,6 @@
 module GameSIMDPlus
 
+open Microsoft.FSharp.NativeInterop
 open System
 open System.Collections.Generic
 open System.Numerics
@@ -52,18 +53,16 @@ let swipeSIMD (cells:int16[]) =
     let vZeroedOrig = Vector.Multiply(vOrig, vRShiftMatches)
     let vResult = Vector.Max(vDoubleOrigMatches, vZeroedOrig)
     vResult.CopyTo(cells, 1)
-    let scores = board16Pool.Rent()
-    try
-        vDoubleOrigMatches.CopyTo(scores)
-        let mutable score = 0s
-        for i = 0 to scores.Length - 1 do
-            score <- score + scores.[i]
-        
-        score
-    finally
-        board16Pool.Return(scores)
+    let mem = NativePtr.stackalloc<int16>(16)
+    let scores = Span<int16>(NativePtr.toVoidPtr mem, 16)
+    vDoubleOrigMatches.CopyTo(scores)
+    let mutable score = 0s
+    for i = 0 to scores.Length - 1 do
+        score <- score + scores.[i]
+    
+    score
 
-let rotate (cells:int16[]) (map:int[]) =
+let inline rotate (cells:int16[]) (map:int[]) =
     let cellsCopy = boardPool.Rent()
     try
         Array.blit cells 0 cellsCopy 0 cells.Length
@@ -87,21 +86,21 @@ let rotate (cells:int16[]) (map:int[]) =
     finally
         boardPool.Return(cellsCopy)
 
-let rotateCopy (cells:int16[]) (map:int[]) =
+let inline rotateCopy (cells:int16[]) (map:int[]) =
     let cellsCopy = Array.copy cells
     for i = 0 to 15 do
         cellsCopy.[map.[i] + 1] <- cells.[i + 1]
     
     cellsCopy
 
-let rotateDirection (cells:int16[]) direction =
+let inline rotateDirection (cells:int16[]) direction =
     match direction with
     | Left -> ()
     | Right -> rotate cells GameArray.flipTransposeMap
     | Up -> rotate cells GameArray.clockwiseTransposeMap
     | Down -> rotate cells GameArray.anticlockwiseTransposeMap
 
-let rotateOppositeDirection (cells:int16[]) direction =
+let inline rotateOppositeDirection (cells:int16[]) direction =
     match direction with
     | Left -> ()
     | Right -> rotate cells GameArray.flipTransposeMap

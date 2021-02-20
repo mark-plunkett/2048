@@ -28,7 +28,7 @@ type Benchmarks () =
             |> runLoop dirFactory (numRuns - 1) context
 
     //[<Benchmark>]
-    member this.FunctionalSeq () =
+    member this.Functional () =
         let board = GameFunctional.boardContext.CreateWithSeed size seed
         let dirFactory = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameFunctional.boardContext
         runLoop dirFactory numRuns GameFunctional.boardContext board
@@ -39,8 +39,8 @@ type Benchmarks () =
         let dirFactory = MonteCarloSolver.genNextDirPSeq monteNumBranches monteNumMoves GameFunctional.boardContext
         runLoop dirFactory numRuns GameFunctional.boardContext board
 
-    [<Benchmark>]
-    member this.DictSeq () =
+    //[<Benchmark>]
+    member this.Dict () =
         let board = GameDict.boardContext.CreateWithSeed size seed
         let dirFactory = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameDict.boardContext
         runLoop dirFactory numRuns GameDict.boardContext board
@@ -51,8 +51,8 @@ type Benchmarks () =
         let dirFactory = MonteCarloSolver.genNextDirPSeq monteNumBranches monteNumMoves GameDict.boardContext
         runLoop dirFactory numRuns GameDict.boardContext board
 
-    [<Benchmark>]
-    member this.ArraySeq () =
+    //[<Benchmark>]
+    member this.Array () =
         let board = GameArray.boardContext.CreateWithSeed size seed
         let dirFactory = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameArray.boardContext
         runLoop dirFactory numRuns GameArray.boardContext board
