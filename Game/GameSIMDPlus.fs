@@ -19,18 +19,25 @@ type ArrayPool<'t>(aFactory:_ -> 't) =
 
 module Board =
 
+    type PosGenerator() =
+        static let ps = [|3;7;15;8;14;11;0;9;12;1;4;13;10;6;5;2;11|]
+        static let mutable i = 0
+
+        static member Next() =
+            i <- i + 1
+            if i >= ps.Length then i <- 0
+            ps.[i]
+
     let addRandomCell (board:Board<int16[]>) =
-        let rec addRec pos value (board:Board<int16[]>) =
-            let i = 1 + GameArray.Board.posToIndex board.Size pos
-            match board.Cells.[i] with
-            | v when v = 0s -> 
+        let rec addRec value (board:Board<int16[]>) =
+            let i = 1 + PosGenerator.Next()
+            if board.Cells.[i] = 0s then
                 board.Cells.[i] <- value
                 board
-            | _ -> 
-                addRec (GameArray.Board.randomPos board) value board
+            else
+                addRec value board
         let value = GameArray.Board.randomValue board
-        let pos = GameArray.Board.randomPos board
-        addRec pos value board
+        addRec value board
 
     let init board =
         board
@@ -107,20 +114,38 @@ let inline rotateOppositeDirection (cells:int16[]) direction =
     | Up -> rotate cells GameArray.anticlockwiseTransposeMap
     | Down -> rotate cells GameArray.clockwiseTransposeMap
 
+let pack (cells:int16[]) =
+    // Indicies account for vector padding
+    let mutable i = 1
+    let mutable j = 2
+    while j < cells.Length - 1 do
+        let vi = cells.[i]
+        let vj = cells.[j]
+        if (j % 4) = 1 then
+            i <- j
+        elif vi > 0s then
+            i <- i + 1
+        elif vi = 0s && vj > 0s then
+            cells.[i] <- vj
+            cells.[j] <- 0s
+            i <- i + 1
+
+        j <- j + 1
+        
+    cells
+
 let swipe (board:Board<int16[]>) direction =
     rotateDirection board.Cells direction
-    GameSIMD.pack board.Cells |> ignore
+    pack board.Cells |> ignore
     let score = swipeSIMD board.Cells
-    GameSIMD.pack board.Cells |> ignore
+    pack board.Cells |> ignore
     rotateOppositeDirection board.Cells direction
     { board with Score = board.Score + int score }
 
 let trySwipe (board:Board<int16[]>) direction =
     let origCells = boardPool.Rent()
     try
-        for i = 1 to 16 do
-            origCells.[i] <- board.Cells.[i]
-
+        Array.blit board.Cells 1 origCells 1 16
         let board' = swipe board direction
         if GameSIMD.arraysEqual origCells board.Cells then board
         else Board.addRandomCell board'

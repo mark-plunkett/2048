@@ -6,7 +6,7 @@ open Common
 [<EntryPoint>]
 let main argv =
 
-    let numRuns = 100
+    let numRuns = 1000
 
     let monteNumBranches = 100
     let monteNumMoves = 100
