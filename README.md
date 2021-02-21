@@ -51,7 +51,7 @@ Instead of the full board, the steps below use a board with two rows (8 values) 
 |4| `   [ 0 8 0 0 0 0 0 0 ] ` | Double values at mached indicies using Vector.ConditionalSelect and Vector.Multiply |
 |5| `   [ -1 2 4 4 8 8 0 0 ] ` | Shift #1 right |
 |6| `   [ 0 0 1 0 0 0 0 0 ] ` | Find matches compared to #1 using Vector.Equals |
-|7| `   [ 2 4 0 8 8 0 0 0 ] ` | Use mask to zero matching values of #1. <br /> These values will be merged to the left and doubled by #4. |
+|7| `   [ 2 4 0 8 8 0 0 0 ] ` | Use #6 as mask to zero matching values of #1. <br /> These values will be merged to the left and doubled by #4. |
 |8| `   [ 2 8 0 8 8 0 0 0 ] ` | Use Vector.Max  to combine #4 and #7 |
 
 ### SIMDPlus
