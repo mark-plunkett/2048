@@ -45,9 +45,9 @@ Instead of the full board, the steps below use a board with two rows (8 values) 
 
 |#| Data | Step |
 |-|-----------------------------|-|
-|1| `-1 [ 2 4 4 8 8 0 0 0 ] -1` | Game state bookended with -1s for shift |
-|2|  `2 [ 4 4 8 8 0 0 0 -1 ]` | Shift left |
-|3| `   [ 0 1 0 0 0 0 0 0 ] ` | Find matches using Vector.BitwiseAnd, ignore any matches at indicies 3, 7, 11, 15 since these would only have matched across row boundaries |
+|1| `-1 [ 2 4 4 8 8 0 0 0 ] -1` | Game state bookended with -1s for shift. |
+|2|  `2 [ 4 4 8 8 0 0 0 -1 ]` | "Shift left" using index offset to Vector constructor. |
+|3| `    [ 0 1 0 0 0 0 0 0 ] ` | Find matches using Vector.BitwiseAnd(). <br />Ignore any matches at indicies 3, 7, 11, 15 since these would only have matched across row boundaries |
 |4| `   [ 0 8 0 0 0 0 0 0 ] ` | Double values at mached indicies using Vector.ConditionalSelect and Vector.Multiply |
 |5| `   [ -1 2 4 4 8 8 0 0 ] ` | Shift #1 right |
 |6| `   [ 0 0 1 0 0 0 0 0 ] ` | Find matches compared to #1 using Vector.Equals |
