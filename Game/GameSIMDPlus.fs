@@ -117,8 +117,7 @@ let inline rotateOppositeDirection (cells:int16[]) direction =
 let pack (cells:int16[]) =
     // Indicies account for vector padding
     let mutable i = 1
-    let mutable j = 2
-    while j < cells.Length - 1 do
+    for j = 2 to cells.Length - 2 do
         let vi = cells.[i]
         let vj = cells.[j]
         if (j % 4) = 1 then
@@ -129,9 +128,7 @@ let pack (cells:int16[]) =
             cells.[i] <- vj
             cells.[j] <- 0s
             i <- i + 1
-
-        j <- j + 1
-        
+ 
     cells
 
 let swipe (board:Board<int16[]>) direction =
