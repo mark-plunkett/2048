@@ -37,7 +37,7 @@ Intel Core i7-6700K CPU 4.00GHz (Skylake), 1 CPU, 8 logical and 4 physical cores
 
 ### SIMD
 
-The following algorithm was used to vectorize the process of merging adjacent matching cells. The board is rotated and "packed" (non-zero values moved to the start of each row) before the merge, and packed again after the merge.
+The following algorithm was used to vectorize the process of merging adjacent matching cells. The board is rotated and "packed" (non-zero values moved to the start of each row) before the merge, and packed again, then unrotated after the merge.
 
 The board state consists of 16 cells, these are stored in a 1-dimensional array of int16s, which means the board state fits exactly into a 256bit SIMD register (16 values x 16 bits per value = 256) This array is bookended with values of -1 on each side to assist with the left and right "shifting" of the array in the algorithm, resulting in an array of length 18.
 
