@@ -180,4 +180,6 @@ let boardContext = {
     CreateWithSeed = fun i j -> Board.emptyWithSeed i j |> Board.init
     CanSwipe = canSwipe
     ToString = Board.toString
+    Score = fun board -> board.Score
+    RNG = fun board -> board.RNG
 }

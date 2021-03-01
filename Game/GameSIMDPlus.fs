@@ -1,5 +1,7 @@
 module GameSIMDPlus
 
+#nowarn "9"
+
 open Microsoft.FSharp.NativeInterop
 open System
 open System.Collections.Generic
@@ -128,7 +130,7 @@ let pack (cells:int16[]) =
             cells.[i] <- vj
             cells.[j] <- 0s
             i <- i + 1
- 
+        
     cells
 
 let swipe (board:Board<int16[]>) direction =
@@ -164,4 +166,6 @@ let boardContext = {
     CreateWithSeed = fun i j -> GameSIMD.Board.emptyWithSeed i j |> Board.init
     CanSwipe = canSwipe
     ToString = GameSIMD.Board.toString
+    Score = fun board -> board.Score
+    RNG = fun board -> board.RNG
 }

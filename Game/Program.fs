@@ -9,7 +9,7 @@ let dumpBoard origin (boardContext:BoardContext<_>) board =
     Console.SetCursorPosition origin
     printfn "%s" (boardContext.ToString board)
     printfn ""
-    printfn "Score: %i" board.Score
+    printfn "Score: %i" (boardContext.Score board)
     printfn ""
 
 let rec getKeyboardDirection board =

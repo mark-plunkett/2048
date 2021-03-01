@@ -18,10 +18,12 @@ type Board<'t> = {
 type Direction = | Up | Down | Left | Right
 
 type BoardContext<'t> = {
-    TrySwipe: Board<'t> -> Direction -> Board<'t>
-    Clone: Board<'t> -> Board<'t>
-    Create: int -> Board<'t>
-    CreateWithSeed: int -> int -> Board<'t>
-    CanSwipe: Board<'t> -> bool
-    ToString: Board<'t> -> string
+    TrySwipe: 't -> Direction -> 't
+    Clone: 't -> 't
+    Create: int -> 't
+    CreateWithSeed: int -> int -> 't
+    CanSwipe: 't -> bool
+    ToString: 't -> string
+    Score: 't -> int
+    RNG: 't -> Random
 }

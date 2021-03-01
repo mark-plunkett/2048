@@ -39,10 +39,10 @@ module Board =
     let posToIndex size pos =
         xyToIndex size pos.X pos.Y
 
-    let randomPos board =
+    let randomPos (board:Board<int16[]>) =
         { X = board.RNG.Next(0, board.Size); Y = board.RNG.Next(0, board.Size) }
 
-    let randomValue board =
+    let randomValue (board:Board<int16[]>) =
         int16 <| if board.RNG.NextDouble() > 0.9 then 4 else 2
 
     let addRandomCell (board:Board<int16[]>) =
@@ -218,4 +218,6 @@ let boardContext = {
     CreateWithSeed = fun i j -> Board.emptyWithSeed i j |> Board.init
     CanSwipe = canSwipe
     ToString = Board.toString
+    Score = fun board -> board.Score
+    RNG = fun board -> board.RNG
 }

@@ -21,10 +21,10 @@ module Board =
             RNG = Random(seed)
             RNGSeed = Some seed }
 
-    let randomPos board =
+    let randomPos (board:Board<Dictionary<Position, int>>) =
         { X = board.RNG.Next(1, board.Size + 1); Y = board.RNG.Next(1, board.Size + 1) }
 
-    let randomValue board =
+    let randomValue (board:Board<Dictionary<Position, int>>) =
         if board.RNG.NextDouble() > 0.9 then 4 else 2
 
     let addRandomCell (board:Board<Dictionary<Position, int>>) =
@@ -182,4 +182,6 @@ let boardContext = {
     CreateWithSeed = fun i j -> Board.emptyWithSeed i j |> Board.init
     CanSwipe = canSwipe
     ToString = Board.toString
+    Score = fun board -> board.Score
+    RNG = fun board -> board.RNG
 }

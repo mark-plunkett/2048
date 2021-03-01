@@ -11,8 +11,9 @@ type Run = {
     Score: int
 }
 
-let randomDir board =
-    match board.RNG.Next(0, 4) with
+let randomDir context board =
+    let random = context.RNG board
+    match random.Next(0, 4) with
     | 0 -> Up
     | 1 -> Down
     | 2 -> Left
@@ -20,11 +21,11 @@ let randomDir board =
     | x -> failwithf "Unsupported: %i" x
 
 let runMoves num context board =
-    let directions = [ for _ in [1..num] do yield randomDir board ]
-    let finalBoard = List.fold (context.TrySwipe) board directions
+    let directions = [ for _ in [1..num] do yield randomDir context board ]
+    let finalBoard = List.fold context.TrySwipe board directions
     {
         InitialDirection = directions.Head
-        Score = finalBoard.Score
+        Score = context.Score finalBoard
     }
 
 let genNextDir numBranches numMoves context board =
