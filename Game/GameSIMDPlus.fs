@@ -6,6 +6,7 @@ open Microsoft.FSharp.NativeInterop
 open System
 open System.Collections.Generic
 open System.Numerics
+open System.Runtime.CompilerServices
 
 open Common
 
@@ -19,6 +20,31 @@ type ArrayPool<'t>(aFactory:_ -> 't) =
     member _.Return(a) =
         unrented.Push(a)
 
+[<Struct>]
+type Board = 
+    val mutable Score: int
+    val Size: int
+    val Cells: int16[]
+    val RNG: Random
+    val RNGSeed: int option
+    new (size:int, cells:int16[], rng:Random, rngSeed:int option) = {
+        Score= 0
+        Size = size
+        Cells = cells
+        RNG = rng
+        RNGSeed = rngSeed
+    }
+
+    member this.SetScore(score) =
+        this.Score <- score
+
+//type Board(size, cells:int16[], rng, rngSeed) = 
+//    member val Score = 0 with get, set
+//    member _.Size = size
+//    member _.Cells = cells
+//    member _.RNG = rng
+//    member _.RNGSeed = rngSeed
+
 module Board =
 
     type PosGenerator() =
@@ -30,23 +56,60 @@ module Board =
             if i >= ps.Length then i <- 0
             ps.[i]
 
-    let addRandomCell (board:Board<int16[]>) =
-        let rec addRec value (board:Board<int16[]>) =
+    let boardSize size = 2 + (size * size)
+    let emptyCells size =
+        let cells = Array.zeroCreate (boardSize size)
+        cells.[0] <- -1s
+        cells.[17] <- -1s
+        cells
+
+    let empty (size:int) =
+        Board(size, emptyCells size, Random(), None)
+            
+    let emptyWithSeed size seed =
+        Board(size, emptyCells size, Random(seed), Some seed)
+
+    let randomValue (board:Board) =
+        int16 <| if board.RNG.NextDouble() > 0.9 then 4 else 2
+
+    let addRandomCell (board:inref<Board>) =
+        let rec addRec value (board:Board) =
             let i = 1 + PosGenerator.Next()
             if board.Cells.[i] = 0s then
                 board.Cells.[i] <- value
                 board
             else
                 addRec value board
-        let value = GameArray.Board.randomValue board
+        let value = randomValue board
         addRec value board
 
-    let init board =
+    let init (board:Board) =
+        addRandomCell &board |> ignore
+        addRandomCell &board |> ignore
         board
-        |> addRandomCell
-        |> addRandomCell
 
-    let create = GameSIMD.Board.empty >> init
+    let create = empty >> init
+
+    let clone (board:Board) =
+        let random =
+            match board.RNGSeed with
+            | Some s -> Random(s)
+            | None -> Random()
+        Board(board.Size, Array.copy board.Cells, random, board.RNGSeed)
+
+    let toString (board:Board) =
+        let newLine = Environment.NewLine
+        board.Cells
+        |> Array.skip 1
+        |> Array.take 16
+        |> Array.indexed
+        |> Array.fold (fun acc (i, v) ->
+            acc
+                + if i % board.Size = 0 then newLine + newLine else String.Empty
+                + match v with
+                    | 0s -> "    -"
+                    | v -> sprintf "%5i" v
+        ) newLine
 
 let boardPool = ArrayPool(fun _ -> GameSIMD.Board.emptyCells 4)
 let board16Pool = ArrayPool(fun _ -> Array.zeroCreate<int16> 16)
@@ -116,7 +179,7 @@ let inline rotateOppositeDirection (cells:int16[]) direction =
     | Up -> rotate cells GameArray.anticlockwiseTransposeMap
     | Down -> rotate cells GameArray.clockwiseTransposeMap
 
-let pack (cells:int16[]) =
+let inline pack (cells:int16[]) =
     // Indicies account for vector padding
     let mutable i = 1
     for j = 2 to cells.Length - 2 do
@@ -126,32 +189,33 @@ let pack (cells:int16[]) =
             i <- j
         elif vi > 0s then
             i <- i + 1
-        elif vi = 0s && vj > 0s then
+        elif vj > 0s then
             cells.[i] <- vj
             cells.[j] <- 0s
             i <- i + 1
         
     cells
 
-let swipe (board:Board<int16[]>) direction =
+let inline swipe (board:inref<Board>) direction =
     rotateDirection board.Cells direction
     pack board.Cells |> ignore
     let score = swipeSIMD board.Cells
     pack board.Cells |> ignore
     rotateOppositeDirection board.Cells direction
-    { board with Score = board.Score + int score }
+    board.SetScore(board.Score + int score)
+    board
 
-let trySwipe (board:Board<int16[]>) direction =
+let trySwipe (board:Board) direction =
     let origCells = boardPool.Rent()
     try
         Array.blit board.Cells 1 origCells 1 16
-        let board' = swipe board direction
+        swipe &board direction
         if GameSIMD.arraysEqual origCells board.Cells then board
-        else Board.addRandomCell board'
+        else Board.addRandomCell &board
     finally
         boardPool.Return(origCells)
 
-let canSwipe board =
+let canSwipe (board:Board) =
     let hRows = ReadOnlySpan(board.Cells, 1, 16)
     let canSwipeHorizontal = GameArray.canSwipeRows board.Size &hRows (board.Size - 1)
     let rotated = rotateCopy board.Cells GameArray.clockwiseTransposeMap
@@ -161,11 +225,11 @@ let canSwipe board =
 
 let boardContext = {
     TrySwipe = trySwipe
-    Clone = GameArray.Board.clone
+    Clone = Board.clone
     Create = Board.create
-    CreateWithSeed = fun i j -> GameSIMD.Board.emptyWithSeed i j |> Board.init
+    CreateWithSeed = fun i j -> Board.emptyWithSeed i j |> Board.init
     CanSwipe = canSwipe
-    ToString = GameSIMD.Board.toString
+    ToString = Board.toString
     Score = fun board -> board.Score
     RNG = fun board -> board.RNG
 }

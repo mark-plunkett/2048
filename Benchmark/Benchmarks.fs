@@ -42,19 +42,19 @@ type Benchmarks () =
     let boardSIMDPlus = GameSIMDPlus.boardContext.CreateWithSeed size seed
     let dirFactorySIMDPlus = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameSIMDPlus.boardContext
 
-    [<Benchmark(Baseline=true)>]
+    //[<Benchmark(Baseline=true)>]
     member this.Functional () =
         runLoop dirFactoryFunctional numRuns GameFunctional.boardContext boardFunctional
 
-    [<Benchmark>]
+    //[<Benchmark>]
     member this.Dict () =
         runLoop dirFactoryDict numRuns GameDict.boardContext boardDict
 
-    [<Benchmark>]
+    //[<Benchmark>]
     member this.Array () =
         runLoop dirFactoryArray numRuns GameArray.boardContext boardArray
 
-    [<Benchmark>]
+    //[<Benchmark>]
     member this.SIMD () =
         runLoop dirFactorySIMD numRuns GameSIMD.boardContext boardSIMD
 
