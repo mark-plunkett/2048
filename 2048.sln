@@ -11,6 +11,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Benchmark", "Benchmark\Benc
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ManualTests", "ManualTests\ManualTests.fsproj", "{D0E80D72-6DAC-48FD-B832-427EA4DAB33B}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ManualBenchmark", "ManualBenchmark\ManualBenchmark.fsproj", "{147D1F56-DDBA-4B6D-90A2-175236F76CB9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -72,5 +74,17 @@ Global
 		{D0E80D72-6DAC-48FD-B832-427EA4DAB33B}.Release|x64.Build.0 = Release|Any CPU
 		{D0E80D72-6DAC-48FD-B832-427EA4DAB33B}.Release|x86.ActiveCfg = Release|Any CPU
 		{D0E80D72-6DAC-48FD-B832-427EA4DAB33B}.Release|x86.Build.0 = Release|Any CPU
+		{147D1F56-DDBA-4B6D-90A2-175236F76CB9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{147D1F56-DDBA-4B6D-90A2-175236F76CB9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{147D1F56-DDBA-4B6D-90A2-175236F76CB9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{147D1F56-DDBA-4B6D-90A2-175236F76CB9}.Debug|x64.Build.0 = Debug|Any CPU
+		{147D1F56-DDBA-4B6D-90A2-175236F76CB9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{147D1F56-DDBA-4B6D-90A2-175236F76CB9}.Debug|x86.Build.0 = Debug|Any CPU
+		{147D1F56-DDBA-4B6D-90A2-175236F76CB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{147D1F56-DDBA-4B6D-90A2-175236F76CB9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{147D1F56-DDBA-4B6D-90A2-175236F76CB9}.Release|x64.ActiveCfg = Release|Any CPU
+		{147D1F56-DDBA-4B6D-90A2-175236F76CB9}.Release|x64.Build.0 = Release|Any CPU
+		{147D1F56-DDBA-4B6D-90A2-175236F76CB9}.Release|x86.ActiveCfg = Release|Any CPU
+		{147D1F56-DDBA-4B6D-90A2-175236F76CB9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

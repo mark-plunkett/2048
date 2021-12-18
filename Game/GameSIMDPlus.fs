@@ -128,11 +128,17 @@ let swipeSIMD (cells:int16[]) =
     let mem = NativePtr.stackalloc<int16>(16)
     let scores = Span<int16>(NativePtr.toVoidPtr mem, 16)
     vDoubleOrigMatches.CopyTo(scores)
-    let mutable score = 0s
-    for i = 0 to scores.Length - 1 do
-        score <- score + scores.[i]
+    let mutable scoreA = 0s
+    let mutable scoreB = 0s
+    let mutable scoreC = 0s
+    let mutable scoreD = 0s
+    for i = 0 to 3 do
+        scoreA <- scoreA + scores.[i]
+        scoreB <- scoreB + scores.[i]
+        scoreC <- scoreC + scores.[i]
+        scoreD <- scoreD + scores.[i]
     
-    score
+    (scoreA + scoreB) + (scoreC + scoreD)
 
 let inline rotate (cells:int16[]) (map:int[]) =
     let cellsCopy = boardPool.Rent()

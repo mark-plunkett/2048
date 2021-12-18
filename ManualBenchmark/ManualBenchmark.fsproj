@@ -5,16 +5,8 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <Tailcalls>true</Tailcalls>
-  </PropertyGroup>
-
   <ItemGroup>
     <Compile Include="Program.fs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Game\Game.fsproj" />
   </ItemGroup>
 
 </Project>
