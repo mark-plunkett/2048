@@ -24,7 +24,7 @@ let rec getKeyboardDirection board =
 let main argv =
     let argsParser = Argu.ArgumentParser.Create<Args.Args>(programName = "2048.exe")
     let args = argsParser.Parse argv
-    let boardContext = GameSIMDPlus.boardContext
+    let boardContext = GameSIMDBranchless.boardContext
     let board = boardContext.Create (args.GetResult(Args.Size, defaultValue = 4))
     let directionFactory =
         match args.TryGetResult(Args.MonteCarlo) with

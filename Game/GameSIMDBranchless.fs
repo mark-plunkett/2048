@@ -1,4 +1,4 @@
-module GameSIMDPlus
+module GameSIMDBranchless
 
 #nowarn "9"
 
@@ -70,7 +70,7 @@ module Board =
         Board(size, emptyCells size, Random(seed), Some seed)
 
     let randomValue (board:Board) =
-        int16 <| if board.RNG.NextDouble() > 0.9 then 4 else 2
+        int16 <| if board.RNG.NextDouble() > 0.9 then 2 else 1
 
     let addRandomCell (board:inref<Board>) =
         let rec addRec value (board:Board) =
@@ -108,7 +108,7 @@ module Board =
                 + if i % board.Size = 0 then newLine + newLine else String.Empty
                 + match v with
                     | 0s -> "    -"
-                    | v -> sprintf "%5i" v
+                    | v -> sprintf "%5i" <| int (2.0 ** float v)
         ) newLine
 
 let boardPool = ArrayPool(fun _ -> GameSIMD.Board.emptyCells 4)
@@ -209,6 +209,7 @@ let inline swipe (board:inref<Board>) direction =
     pack board.Cells |> ignore
     rotateOppositeDirection board.Cells direction
     board.SetScore(board.Score + int score)
+    board
 
 let trySwipe (board:Board) direction =
     let origCells = boardPool.Rent()

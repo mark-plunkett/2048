@@ -13,6 +13,7 @@
     <Compile Include="GameArray.fs" />
     <Compile Include="GameSIMD.fs" />
     <Compile Include="GameSIMDPlus.fs" />
+    <Compile Include="GameSIMDBranchless.fs" />
     <Compile Include="MonteCarloSolver.fs" />
     <Compile Include="Args.fs" />
     <Compile Include="Program.fs" />
