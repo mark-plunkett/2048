@@ -20,7 +20,6 @@ type ArrayPool<'t>(aFactory:_ -> 't) =
     member _.Return(a) =
         unrented.Push(a)
 
-[<Struct>]
 type Board = 
     val mutable Score: int
     val Size: int
@@ -111,34 +110,35 @@ module Board =
                     | v -> sprintf "%5i" <| int (2.0 ** float v)
         ) newLine
 
+let dump msg o = 
+    printfn "%s: %A" msg o
+    o
+
 let boardPool = ArrayPool(fun _ -> GameSIMD.Board.emptyCells 4)
 let board16Pool = ArrayPool(fun _ -> Array.zeroCreate<int16> 16)
 let swipeSIMD (cells:int16[]) =
     let vOrig = Vector(cells, 1)
+    let vOrigZeroesMask = Vector.Equals(vOrig, Vector<int16>.Zero)
+    let vOrigInc = Vector.Add(Vector<int16>.One, vOrig)
+    let vOrigIncZeroed = Vector.ConditionalSelect(vOrigZeroesMask, Vector<int16>.Zero, vOrigInc)
     let vLShift = Vector(cells, 2)
     let vMatches = Vector.BitwiseAnd(GameSIMD.vIgnoreMatchIndicies, Vector.Equals(vOrig, vLShift))
-    let vOrigMatches = Vector.ConditionalSelect(vMatches, vOrig, Vector<int16>.Zero)
-    let vDoubleOrigMatches = Vector.Multiply(Vector(2s), vOrigMatches)
+    let vOrigMatchesInc = Vector.ConditionalSelect(vMatches, vOrigIncZeroed, Vector<int16>.Zero)
     let vRShift = Vector(cells)
     let vRShiftEqualsOrig = Vector.Equals(vOrig, vRShift)
     let vRShiftMatches = Vector.Xor(vRShiftEqualsOrig, Vector<int16>.One)
     let vZeroedOrig = Vector.Multiply(vOrig, vRShiftMatches)
-    let vResult = Vector.Max(vDoubleOrigMatches, vZeroedOrig)
+    let vResult = Vector.Max(vOrigMatchesInc, vZeroedOrig)
     vResult.CopyTo(cells, 1)
     let mem = NativePtr.stackalloc<int16>(16)
     let scores = Span<int16>(NativePtr.toVoidPtr mem, 16)
-    vDoubleOrigMatches.CopyTo(scores)
-    let mutable scoreA = 0s
-    let mutable scoreB = 0s
-    let mutable scoreC = 0s
-    let mutable scoreD = 0s
-    for i = 0 to 3 do
-        scoreA <- scoreA + scores.[i]
-        scoreB <- scoreB + scores.[i]
-        scoreC <- scoreC + scores.[i]
-        scoreD <- scoreD + scores.[i]
+    vOrigMatchesInc.CopyTo(scores)
+    let mutable score = 0s
+    for i = 0 to 15 do
+        if scores.[i] > 0s then
+            score <- score + int16 (2.0 ** float scores.[i])
     
-    (scoreA + scoreB) + (scoreC + scoreD)
+    score
 
 let inline rotate (cells:int16[]) (map:int[]) =
     let cellsCopy = boardPool.Rent()
@@ -208,8 +208,7 @@ let inline swipe (board:inref<Board>) direction =
     let score = swipeSIMD board.Cells
     pack board.Cells |> ignore
     rotateOppositeDirection board.Cells direction
-    board.SetScore(board.Score + int score)
-    board
+    board.SetScore (board.Score + int score)
 
 let trySwipe (board:Board) direction =
     let origCells = boardPool.Rent()
