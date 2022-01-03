@@ -14,6 +14,14 @@ let firstOfEachPairMask = Vector256.Create(
     10uy,
     12uy,
     14uy,
+    0uy,
+    0uy,
+    0uy,
+    0uy,
+    0uy,
+    0uy,
+    0uy,
+    0uy,
     16uy,
     18uy,
     20uy,
@@ -29,18 +37,9 @@ let firstOfEachPairMask = Vector256.Create(
     0uy,
     0uy,
     0uy,
-    0uy,
-    0uy,
-    0uy,
-    0uy,
-    0uy,
-    0uy,
-    0uy,
-    0uy,
     0uy)
 
-let cells1 = Vector256.Create(
-    0s,
+let cells = Vector256.Create(
     1s,
     2s,
     3s,
@@ -48,18 +47,6 @@ let cells1 = Vector256.Create(
     5s,
     6s,
     7s,
-    0s,
-    0s,
-    0s,
-    0s,
-    0s,
-    0s,
-    0s,
-    0s)
-
-printfn "cells %A" cells1
-
-let cells2 = Vector256.Create(
     8s,
     9s,
     10s,
@@ -68,70 +55,21 @@ let cells2 = Vector256.Create(
     13s,
     14s,
     15s,
-    0s,
-    0s,
-    0s,
-    0s,
-    0s,
-    0s,
-    0s,
-    0s)
+    16s)
 
-printfn "cells2 %A" cells2
+printfn "cells %A" cells
 
-let cells1Bytes = cells1.AsByte()
+let cellsBytes = cells.AsByte()
 
-printfn "cells1Bytes %A" cells1Bytes
+printfn "cellsBytes %A" cellsBytes
 
-let cells1Packed = Avx2.Shuffle (cells1Bytes, firstOfEachPairMask)
+let cellsPacked = Avx2.Shuffle (cellsBytes, firstOfEachPairMask)
 
-printfn "cells1Packed %A" cells1Packed
+printfn "cellsPacked %A" cellsPacked
 
-let cells2Bytes = cells2.AsByte()
-let cells2Packed = Avx2.Shuffle (cells2Bytes, firstOfEachPairMask)
+let cells128 = cellsPacked.GetLower().WithUpper(cellsPacked.GetUpper().GetLower())
 
-printfn "cells2Packed %A" cells2Packed
-
-let combined = Avx2.BlendVariable (
-    cells1Packed,
-    cells2Packed,
-    Vector256.Create(
-        0uy,
-        0uy,
-        0uy,
-        0uy,
-        0uy,
-        0uy,
-        0uy,
-        0uy,
-        System.Byte.MaxValue,
-        System.Byte.MaxValue,
-        System.Byte.MaxValue,
-        System.Byte.MaxValue,
-        System.Byte.MaxValue,
-        System.Byte.MaxValue,
-        System.Byte.MaxValue,
-        System.Byte.MaxValue,
-        0uy,
-        0uy,
-        0uy,
-        0uy,
-        0uy,
-        0uy,
-        0uy,
-        0uy,
-        0uy,
-        0uy,
-        0uy,
-        0uy,
-        0uy,
-        0uy,
-        0uy,
-        0uy))
-
-printfn "combined %A" combined
-
-let final128 = combined.GetLower()
+printfn "cells128 %A" cells128
 
 let antiClockwiseMask = Vector128.Create(
     3uy,
@@ -151,6 +89,20 @@ let antiClockwiseMask = Vector128.Create(
     8uy,
     12uy)
 
-let res = Avx2.Shuffle (final128, antiClockwiseMask)
+let res = Ssse3.Shuffle (cells128, antiClockwiseMask)
 
 printfn "res %A" res
+
+let res256 = res.ToVector256()
+
+printfn "res256 %A" res256
+
+let unpackedLow = Avx2.UnpackLow (res256, Vector256.Zero)
+let unpackedHigh = Avx2.UnpackHigh (res256, Vector256.Zero)
+let unpacked = unpackedLow.WithUpper (unpackedHigh.GetLower())
+
+printfn "unpacked %A" unpacked
+
+let unpacked16s = unpacked.AsInt16 ()
+
+printfn "unpacked16s %A" unpacked16s

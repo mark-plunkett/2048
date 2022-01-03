@@ -33,6 +33,23 @@ let vTune_swipeSIMD (cells:int16[]) =
 [<EntryPoint>]
 let main argv =
 
-    gameSim()
+    let cells = [ 
+        [ 2; 0; 2; 0 ]
+        [ 2; 2; 0; 2 ]
+        [ 2; 2; 0; 0 ]
+        [ 2; 0; 0; 0 ] ]
+    let expected = [
+        [ 3; 0; 0; 0; ]
+        [ 3; 2; 0; 0; ]
+        [ 3; 0; 0; 0; ]
+        [ 2; 0; 0; 0; ]
+    ]
+    let board = GameSIMDBranchless.Board.create 4
+    let expected = GameSIMDBranchless.Board.fromList expected
+    let cells' = GameSIMDBranchless.Board.fromList cells 
+    Array.iter (fun c -> printf "%i, " c) cells'
+    printfn ""
+    Array.blit cells' 0 board.Cells 0 18
+    GameSIMDBranchless.swipe &board Left |> ignore
 
     0
