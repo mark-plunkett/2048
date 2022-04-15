@@ -33,3 +33,28 @@ swipe a
 printfn "%A" a
 printfn "---"
 //process [| 2; 4; 4; 4; 0; 0; 0; 0; 0 |]
+
+open System
+open System.Numerics
+
+let pad = Int16.MinValue
+let v = [| 
+    2s; 2s; 1s; 0s; 
+    0s; 0s; 0s; 0s; 
+    0s; 4s; 0s; 0s; 
+    0s; 0s; 0s; 9s;
+    pad; pad; pad; pad; pad; pad; pad; pad; |]
+
+print v
+v.Length |> print
+
+let doVec() =
+    let v1 = Vector (v)
+    let vecLength = Vector<int16>.Count
+    let v2span = System.Span (v, 8, vecLength)
+    let v2 = Vector<int16>(v2span)
+    let vNarrow = Vector.Narrow (v1, v2)
+    vNarrow.GetType() |> print
+    print vNarrow
+
+doVec()

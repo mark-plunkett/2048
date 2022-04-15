@@ -162,38 +162,100 @@ module Constants =
         11uy, 10uy, 9uy, 8uy,
         15uy, 14uy, 13uy, 12uy)
 
-let dump msg o = 
+    let rotateRightMask = Vector128.Create(
+        15uy, 0uy, 1uy, 2uy,
+        3uy, 4uy, 5uy, 6uy,
+        7uy, 8uy, 9uy, 10uy,
+        11uy, 12uy, 13uy, 14uy)
+
+    let vIgnoreRowStartIndicies = Vector([|
+        0s
+        -1s
+        -1s
+        -1s
+        0s
+        -1s
+        -1s
+        -1s
+        0s
+        -1s
+        -1s
+        -1s
+        0s
+        -1s
+        -1s
+        -1s |])
+
+    let vIgnoreRowEndIndicies = Vector([|
+        -1s
+        -1s
+        -1s
+        0s
+        -1s
+        -1s
+        -1s
+        0s
+        -1s
+        -1s
+        -1s
+        0s
+        -1s
+        -1s
+        -1s
+        0s |])
+
+let dump msg (o : Vector<int16>) = 
+    // let o' = [4..7] |> List.map (fun i -> sprintf "%i " o.[i]) |> fun s -> String.Join ("", s)
     printfn "%30s: %A" msg o
     o
 
 let boardPool = ArrayPool(fun _ -> GameSIMD.Board.emptyCells 4)
 let board16Pool = ArrayPool(fun _ -> Array.zeroCreate<int16> 16)
+
+let inline shuffleVec (cells : Vector256<int16>) mask =
+
+    let cellsBytes = cells.AsByte ()
+    let cellsPacked = Avx2.Shuffle (cellsBytes, Constants.firstOfEachPairMask)
+    let cells128 = cellsPacked.GetLower().WithUpper(cellsPacked.GetUpper().GetLower())
+    let res = Ssse3.Shuffle (cells128, mask)
+    let res256 = res.ToVector256 ()
+    let unpackedLow = Avx2.UnpackLow (res256, Vector256.Zero)
+    let unpackedHigh = Avx2.UnpackHigh (res256, Vector256.Zero)
+    let unpacked = unpackedLow.WithUpper (unpackedHigh.GetLower())
+    unpacked.AsInt16 ()
+
+let inline shuffle (cellsArray:int16[]) (mask : Vector128<byte>) =
+
+    let ptr = fixed cellsArray
+    let cells = Avx.LoadVector256 (NativePtr.add ptr 1)
+    let unpacked = shuffleVec cells mask
+    unpacked.AsVector().CopyTo(cellsArray, 1)
+
 let swipeSIMD (cells:int16[]) =
-    let vOrig = Vector(cells, 1) |> dump "vOrig"
-    let vLShift = Vector(cells, 2) |> dump "vLShift"
-    let vMatches = Vector.BitwiseAnd(GameSIMD.vIgnoreMatchIndicies, Vector.Equals(vOrig, vLShift)) |> dump "vMatches"
-    let vOrigMatches = Vector.ConditionalSelect(vMatches, vOrig, Vector<int16>.Zero) |> dump "vOrigMatches"
 
-    let vIncrementedOrigMatches = Vector.Add(Vector<int16>.One, vOrigMatches) |> dump "vIncrementedOrigMatches"
+    let vOrig = Vector (cells, 1) |> dump "vOrig"
+    let vOrigLShift = Vector (cells, 2) |> dump "vOrigLShift"
+    let vOrigRShift = shuffleVec (vOrig.AsVector256()) Constants.rotateRightMask |> Vector256.AsVector |> dump "vOrigRShift"
+    let vOrigLShiftZeroed = Vector.BitwiseAnd (Constants.vIgnoreRowEndIndicies, vOrigLShift) |> dump "vOrigLShiftZeroed"
+    let vOrigRShiftZeroed = Vector.BitwiseAnd (Constants.vIgnoreRowStartIndicies, vOrigRShift) |> dump "vOrigRShiftZeroed"
+    let vBothMatches = Vector.Equals (vOrigLShiftZeroed, vOrigRShiftZeroed) |> dump "vBothMatches"
+    let vBothMatchesNonZero = Vector.ConditionalSelect (Vector.GreaterThan (vOrigLShiftZeroed, Vector.Zero), vBothMatches, Vector.Zero) |> dump "vBothMatchesNonZero"
 
-    let vOrigGreaterThanZeroMask = Vector.GreaterThan (vOrigMatches, Vector<int16>.Zero) |> dump "vOrigGreaterThanZeroMask"
-    let vOrigZeroMask = Vector.ConditionalSelect(vOrigGreaterThanZeroMask, Vector<int16>.One, Vector<int16>.Zero) |> dump "vOrigZeroMask"
-    let vZeroedIncrementedMatches = Vector.Multiply(vIncrementedOrigMatches, vOrigZeroMask) |> dump "vZeroedIncrementedMatches"
+    printfn ""
 
-    let vRShift = Vector(cells) |> dump "vRShift"
-    let vRShiftEqualsOrig = Vector.Equals(vOrig, vRShift) |> dump "vRShiftEqualsOrig"
-    // where rshiftEqualsOrig = true && !vMatches...
-    let vRemainder = Vector.Equals (vRShiftEqualsOrig, vMatches) |> dump "vRemainder"
-    let vZeroedOrig = Vector.ConditionalSelect (vRShiftEqualsOrig, Vector<int16>.Zero, vOrig) |> dump "vZeroedOrig"
-    let vZeroedIncremented = Vector.ConditionalSelect (vRShiftEqualsOrig, Vector<int16>.Zero, vZeroedIncrementedMatches) |> dump "vZeroedIncremented"
-
-    let vMaxes = Vector.Max (vZeroedOrig, vZeroedIncremented) |> dump "vMaxes"
-    let vResult = Vector.ConditionalSelect (vRemainder, vOrig, vMaxes) |> dump "vResult"
+    let vMatches = Vector.BitwiseAnd(GameSIMD.vIgnoreMatchIndicies, Vector.Equals(vOrig, vOrigLShift))
+    let vOrigMatches = Vector.ConditionalSelect(vMatches, vOrig, Vector.Zero)
+    let vDoubleOrigMatches = Vector.Multiply(Vector(2s), vOrigMatches)
+    let vRShift = Vector(cells)
+    let vRShiftEqualsOrig = Vector.Equals(vOrig, vRShift)
+    let vRShiftMatches = Vector.Xor(vRShiftEqualsOrig, Vector.One)
+    let vZeroedOrig = Vector.Multiply(vOrig, vRShiftMatches)
+    let vIncremented = Vector.Max(vDoubleOrigMatches, vZeroedOrig) |> dump "vIncremented"
+    let vResult = Vector.ConditionalSelect (vBothMatchesNonZero, vOrig, vIncremented) |> dump "vResult"
 
     vResult.CopyTo(cells, 1)
     let mem = NativePtr.stackalloc<int16>(16)
     let scores = Span<int16>(NativePtr.toVoidPtr mem, 16)
-    vIncrementedOrigMatches.CopyTo(scores)
     let mutable scoreA = 0s
     let mutable scoreB = 0s
     let mutable scoreC = 0s
@@ -205,21 +267,6 @@ let swipeSIMD (cells:int16[]) =
         scoreD <- scoreD + scores.[i]
     
     (scoreA + scoreB) + (scoreC + scoreD)
-
-let inline rotate (cellsArray:int16[]) (mask : Vector128<byte>) =
-
-    let ptr = fixed cellsArray
-    let cells = Avx.LoadVector256 (NativePtr.add ptr 1)
-    let cellsBytes = cells.AsByte ()
-    let cellsPacked = Avx2.Shuffle (cellsBytes, Constants.firstOfEachPairMask)
-    let cells128 = cellsPacked.GetLower().WithUpper(cellsPacked.GetUpper().GetLower())
-    let res = Ssse3.Shuffle (cells128, mask)
-    let res256 = res.ToVector256 ()
-    let unpackedLow = Avx2.UnpackLow (res256, Vector256.Zero)
-    let unpackedHigh = Avx2.UnpackHigh (res256, Vector256.Zero)
-    let unpacked = unpackedLow.WithUpper (unpackedHigh.GetLower())
-    let unpacked16s = unpacked.AsInt16 ()
-    unpacked16s.AsVector().CopyTo(cellsArray, 1)
     
 let inline rotateCopy (cells:int16[]) (map:int[]) =
     let cellsCopy = Array.copy cells
@@ -231,16 +278,16 @@ let inline rotateCopy (cells:int16[]) (map:int[]) =
 let inline rotateDirection (cells:int16[]) direction =
     match direction with
     | Left -> ()
-    | Right -> rotate cells Constants.flipTransposeMap
-    | Up -> rotate cells Constants.antiClockwiseTransposeMap
-    | Down -> rotate cells Constants.clockwiseTransposeMap
+    | Right -> shuffle cells Constants.flipTransposeMap
+    | Up -> shuffle cells Constants.antiClockwiseTransposeMap
+    | Down -> shuffle cells Constants.clockwiseTransposeMap
 
 let inline rotateOppositeDirection (cells:int16[]) direction =
     match direction with
     | Left -> ()
-    | Right -> rotate cells Constants.flipTransposeMap
-    | Up -> rotate cells Constants.clockwiseTransposeMap
-    | Down -> rotate cells Constants.antiClockwiseTransposeMap
+    | Right -> shuffle cells Constants.flipTransposeMap
+    | Up -> shuffle cells Constants.clockwiseTransposeMap
+    | Down -> shuffle cells Constants.antiClockwiseTransposeMap
 
 let inline pack (cells:int16[]) =
     // Indicies account for vector padding
