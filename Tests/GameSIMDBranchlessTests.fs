@@ -59,7 +59,7 @@ let rotateData : obj[] seq =
 let ``rotate`` cells expected map =
     let convert = GameSIMDBranchless.Board.fromList
     let cellsArray = convert cells 
-    rotate cellsArray map
+    rotateDirection cellsArray map
     let expectedArray = convert expected
     Assert.Equal<int16[]>(expectedArray, cellsArray)
 

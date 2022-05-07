@@ -99,7 +99,7 @@ module Board =
         Board(board.Size, Array.copy board.Cells, random, board.RNGSeed)
 
     let toString (board:Board) =
-        printfn "pretostring %A\n" board.Cells
+        // printfn "pretostring %A\n" board.Cells
         let newLine = Environment.NewLine
         let s = 
             board.Cells
@@ -113,7 +113,7 @@ module Board =
                         | 0s -> "    -"
                         | v -> sprintf "%5i" <| int (2.0 ** float v)
             ) newLine
-        printfn "post tostring %A\n" board.Cells
+        // printfn "post tostring %A\n" board.Cells
         s
 
     let fromList (cells:int list list) =
@@ -258,29 +258,29 @@ let swipeSIMD (cells:int16[]) =
 
     let vOrig = Vector (cells, 1) |> dump "vOrig"
     let vOrigLShift = Vector (cells, 2) |> dump "vOrigLShift"
-    let vOrigRShift = shuffleVec (vOrig.AsVector256()) Constants.rotateRightMask |> Vector256.AsVector |> dump "vOrigRShift"
     let vOrigLShiftZeroed = Vector.BitwiseAnd (Constants.vIgnoreRowEndIndicies, vOrigLShift) |> dump "vOrigLShiftZeroed"
+    let vLShiftMatches = Vector.BitwiseAnd (vOrig, vOrigLShiftZeroed) |> dump "vLShiftMatches"
+
+    printfn ""
+
+    let vOrigRShift = shuffleVec (vOrig.AsVector256()) Constants.rotateRightMask |> Vector256.AsVector |> dump "vOrigRShift"
     let vOrigRShiftZeroed = Vector.BitwiseAnd (Constants.vIgnoreRowStartIndicies, vOrigRShift) |> dump "vOrigRShiftZeroed"
+    let vRShiftMatches = Vector.BitwiseAnd (vOrig, vOrigRShiftZeroed) |> dump "vRShiftMatches"
 
     printfn ""
 
-    let vBothMatches = Vector.Equals (vOrigLShiftZeroed, vOrigRShiftZeroed) |> dump "vBothMatches"
-    let vLandRMatchesNonZero = Vector.ConditionalSelect (Vector.GreaterThan (vOrigLShiftZeroed, Vector.Zero), vBothMatches, Vector.Zero) |> dump "vLandRMatchesNonZero"
+    let vBothMatches = Vector.BitwiseAnd (vLShiftMatches, vRShiftMatches) |> dump "vBothMatches"
+    let vRMatchesNotBoth = Vector.Xor (vRShiftMatches, vBothMatches) |> dump "vRMatchesNotBoth"
+    let vOrigZeroed = Vector.ConditionalSelect (vRMatchesNotBoth, Vector.Zero, vOrig) |> dump "vOrigZeroed"
 
     printfn ""
 
-    let vLShiftMatches = Vector.BitwiseAnd(Constants.vIgnoreRowEndIndicies, Vector.Equals(vOrig, vOrigLShift))
-    let vOrigMatches = Vector.ConditionalSelect(vLShiftMatches, vOrig, Vector.Zero)
-    let vIncrementedMatches = Vector.Add(Vector.One, vOrigMatches) |> dump "vIncrementedMatches"
-    let vIncrementedMatchesZeroed = Vector.ConditionalSelect (Vector.Equals (Vector.One, vIncrementedMatches), Vector.Zero, vIncrementedMatches) |> dump "vIncrementedMatchesZeroed"
-    let vRShiftMatches = Vector.Equals(vOrig, vOrigRShift) |> dump "vRShiftMatches"
-    let vRShiftMatchesFirstCol = Vector.BitwiseOr(Constants.vAlwaysIncludeRowStartIndicies, vRShiftMatches) |> dump "vRShiftMatchesFirstCol"
+    let vLMatchesNotBoth = Vector.Xor (vLShiftMatches, vBothMatches) |> dump "vLMatchesNotBoth"
+    let vIncMask = Vector.GreaterThan (vLMatchesNotBoth, Vector.Zero) |> dump "vIncMask"
+    let vIncOrig = Vector.Add (vOrigZeroed, Vector.One)
+    let vResult = Vector.ConditionalSelect (vIncMask, vIncOrig, vOrigZeroed) |> dump "vResult"
 
     printfn ""
-
-    let vZeroedOrig = Vector.Multiply(vOrig, Vector.Multiply(-1s, vRShiftMatchesFirstCol)) |> dump "vZeroedOrig"
-    let vIncremented = Vector.Max(vIncrementedMatchesZeroed, vZeroedOrig) |> dump "vIncremented"
-    let vResult = Vector.ConditionalSelect (vLandRMatchesNonZero, vOrig, vIncremented) |> dump "vResult"
 
     vResult.CopyTo(cells, 1)
     let mem = NativePtr.stackalloc<int16>(16)
@@ -336,15 +336,11 @@ let inline pack (cells:int16[]) =
     cells
 
 let inline swipe (board:inref<Board>) direction =
-    printfn "%A\n" board.Cells
     rotateDirection board.Cells direction
     pack board.Cells |> ignore
     let score = swipeSIMD board.Cells
-    printfn "%A\n" board.Cells
     pack board.Cells |> ignore
-    printfn "%A\n" board.Cells
     rotateOppositeDirection board.Cells direction
-    printfn "%A\n" board.Cells
     board.SetScore (board.Score + int score)
 
 let trySwipe (board:Board) direction =
