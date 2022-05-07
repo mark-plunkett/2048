@@ -13,7 +13,7 @@ let gameSim () =
     let r = Random()
     let seed = r.Next()
     
-    let context = GameSIMDPlus.boardContext
+    let context = GameSIMDBranchless.boardContext
     
     let rec runLoop dirFactory numRuns (context:BoardContext<_>) board =
         if numRuns = 0 then
@@ -30,8 +30,7 @@ let gameSim () =
 let vTune_swipeSIMD (cells:int16[]) =
     ()
 
-[<EntryPoint>]
-let main argv =
+let oneStep () =
 
     // let cells = [ 
     //     [ 2; 0; 2; 0 ]
@@ -67,4 +66,7 @@ let main argv =
     Array.blit cells' 0 board.Cells 0 18
     GameSIMDBranchless.swipe &board Left |> ignore
 
+[<EntryPoint>]
+let main argv =
+    gameSim ()
     0

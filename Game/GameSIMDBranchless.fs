@@ -187,7 +187,7 @@ let dump msg (o : Vector<int16>) =
 let boardPool = ArrayPool(fun _ -> GameSIMD.Board.emptyCells 4)
 let board16Pool = ArrayPool(fun _ -> Array.zeroCreate<int16> 16)
 
-let inline shuffleVec (cells : Vector256<int16>) mask =
+let  shuffleVec (cells : Vector256<int16>) mask =
 
     let cellsBytes = cells.AsByte ()
     let cellsPacked = Avx2.Shuffle (cellsBytes, Constants.firstOfEachPairMask)
@@ -199,12 +199,20 @@ let inline shuffleVec (cells : Vector256<int16>) mask =
     let unpacked = unpackedLow.WithUpper (unpackedHigh.GetLower())
     unpacked.AsInt16 ()
 
-let inline shuffle (cellsArray:int16[]) (mask : Vector128<byte>) =
+let  shuffle (cellsArray:int16[]) (mask : Vector128<byte>) =
 
     let ptr = fixed cellsArray
     let cells = Avx.LoadVector256 (NativePtr.add ptr 1)
     let unpacked = shuffleVec cells mask
     unpacked.AsVector().CopyTo(cellsArray, 1)
+
+let inline collapse i =
+    -(-i >>> 15)
+
+let inline calcScore (scores: Span<int16>) i =
+    let score = int scores.[i]
+    let pow = 1 <<< score
+    (collapse score) * pow |> int16
 
 let swipeSIMD (cells:int16[]) =
 
@@ -228,42 +236,47 @@ let swipeSIMD (cells:int16[]) =
     let vResult = Vector.ConditionalSelect (vLMatchesNotBoth, vIncOrig, vOrigZeroed)
 
     vResult.CopyTo (cells, 1)
+
+    // Scores
+    let vScores = Vector.ConditionalSelect (vLMatchesNotBoth, vIncOrig, Vector.Zero)
     let mem = NativePtr.stackalloc<int16> (16)
     let scores = Span<int16> (NativePtr.toVoidPtr mem, 16)
+    vScores.CopyTo (scores)
     let mutable scoreA = 0s
     let mutable scoreB = 0s
     let mutable scoreC = 0s
     let mutable scoreD = 0s
     for i = 0 to 3 do
-        scoreA <- scoreA + scores.[i]
-        scoreB <- scoreB + scores.[i]
-        scoreC <- scoreC + scores.[i]
-        scoreD <- scoreD + scores.[i]
+        let i' = i * 4
+        scoreA <- scoreA + calcScore scores (i')
+        scoreB <- scoreB + calcScore scores (i' + 1)
+        scoreC <- scoreC + calcScore scores (i' + 2)
+        scoreD <- scoreD + calcScore scores (i' + 3)
     
     (scoreA + scoreB) + (scoreC + scoreD)
 
-let inline rotateCopy (cells:int16[]) (map:int[]) =
+let  rotateCopy (cells:int16[]) (map:int[]) =
     let cellsCopy = Array.copy cells
     for i = 0 to 15 do
         cellsCopy.[map.[i] + 1] <- cells.[i + 1]
     
     cellsCopy 
 
-let inline rotateDirection (cells:int16[]) direction =
+let  rotateDirection (cells:int16[]) direction =
     match direction with
     | Left -> ()
     | Right -> shuffle cells Constants.flipTransposeMap
     | Up -> shuffle cells Constants.antiClockwiseTransposeMap
     | Down -> shuffle cells Constants.clockwiseTransposeMap
 
-let inline rotateOppositeDirection (cells:int16[]) direction =
+let  rotateOppositeDirection (cells:int16[]) direction =
     match direction with
     | Left -> ()
     | Right -> shuffle cells Constants.flipTransposeMap
     | Up -> shuffle cells Constants.clockwiseTransposeMap
     | Down -> shuffle cells Constants.antiClockwiseTransposeMap
 
-let inline pack (cells:int16[]) =
+let pack (cells:int16[]) =
     // Indicies account for vector padding
     let mutable i = 1
     for j = 2 to cells.Length - 2 do
@@ -280,7 +293,7 @@ let inline pack (cells:int16[]) =
         
     cells
 
-let inline swipe (board:inref<Board>) direction =
+let swipe (board:inref<Board>) direction =
     rotateDirection board.Cells direction
     pack board.Cells |> ignore
     let score = swipeSIMD board.Cells
