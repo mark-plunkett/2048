@@ -99,18 +99,22 @@ module Board =
         Board(board.Size, Array.copy board.Cells, random, board.RNGSeed)
 
     let toString (board:Board) =
+        printfn "pretostring %A\n" board.Cells
         let newLine = Environment.NewLine
-        board.Cells
-        |> Array.skip 1
-        |> Array.take 16
-        |> Array.indexed
-        |> Array.fold (fun acc (i, v) ->
-            acc
-                + if i % board.Size = 0 then newLine + newLine else String.Empty
-                + match v with
-                    | 0s -> "    -"
-                    | v -> sprintf "%5i" <| int (2.0 ** float v)
-        ) newLine
+        let s = 
+            board.Cells
+            |> Array.skip 1
+            |> Array.take 16
+            |> Array.indexed
+            |> Array.fold (fun acc (i, v) ->
+                acc
+                    + if i % board.Size = 0 then newLine + newLine else String.Empty
+                    + match v with
+                        | 0s -> "    -"
+                        | v -> sprintf "%5i" <| int (2.0 ** float v)
+            ) newLine
+        printfn "post tostring %A\n" board.Cells
+        s
 
     let fromList (cells:int list list) =
         let empty = emptyCells 4
@@ -204,6 +208,25 @@ module Constants =
         -1s
         0s |])
 
+    let vAlwaysIncludeRowStartIndicies = Vector([|
+        -1s
+        0s
+        0s
+        0s
+        -1s
+        0s
+        0s
+        0s
+        -1s
+        0s
+        0s
+        0s
+        -1s
+        0s
+        0s
+        0s |])
+
+
 let dump msg (o : Vector<int16>) = 
     // let o' = [4..7] |> List.map (fun i -> sprintf "%i " o.[i]) |> fun s -> String.Join ("", s)
     printfn "%30s: %A" msg o
@@ -238,20 +261,26 @@ let swipeSIMD (cells:int16[]) =
     let vOrigRShift = shuffleVec (vOrig.AsVector256()) Constants.rotateRightMask |> Vector256.AsVector |> dump "vOrigRShift"
     let vOrigLShiftZeroed = Vector.BitwiseAnd (Constants.vIgnoreRowEndIndicies, vOrigLShift) |> dump "vOrigLShiftZeroed"
     let vOrigRShiftZeroed = Vector.BitwiseAnd (Constants.vIgnoreRowStartIndicies, vOrigRShift) |> dump "vOrigRShiftZeroed"
-    let vBothMatches = Vector.Equals (vOrigLShiftZeroed, vOrigRShiftZeroed) |> dump "vBothMatches"
-    let vBothMatchesNonZero = Vector.ConditionalSelect (Vector.GreaterThan (vOrigLShiftZeroed, Vector.Zero), vBothMatches, Vector.Zero) |> dump "vBothMatchesNonZero"
 
     printfn ""
 
-    let vMatches = Vector.BitwiseAnd(GameSIMD.vIgnoreMatchIndicies, Vector.Equals(vOrig, vOrigLShift))
-    let vOrigMatches = Vector.ConditionalSelect(vMatches, vOrig, Vector.Zero)
-    let vDoubleOrigMatches = Vector.Multiply(Vector(2s), vOrigMatches)
-    let vRShift = Vector(cells)
-    let vRShiftEqualsOrig = Vector.Equals(vOrig, vRShift)
-    let vRShiftMatches = Vector.Xor(vRShiftEqualsOrig, Vector.One)
-    let vZeroedOrig = Vector.Multiply(vOrig, vRShiftMatches)
-    let vIncremented = Vector.Max(vDoubleOrigMatches, vZeroedOrig) |> dump "vIncremented"
-    let vResult = Vector.ConditionalSelect (vBothMatchesNonZero, vOrig, vIncremented) |> dump "vResult"
+    let vBothMatches = Vector.Equals (vOrigLShiftZeroed, vOrigRShiftZeroed) |> dump "vBothMatches"
+    let vLandRMatchesNonZero = Vector.ConditionalSelect (Vector.GreaterThan (vOrigLShiftZeroed, Vector.Zero), vBothMatches, Vector.Zero) |> dump "vLandRMatchesNonZero"
+
+    printfn ""
+
+    let vLShiftMatches = Vector.BitwiseAnd(Constants.vIgnoreRowEndIndicies, Vector.Equals(vOrig, vOrigLShift))
+    let vOrigMatches = Vector.ConditionalSelect(vLShiftMatches, vOrig, Vector.Zero)
+    let vIncrementedMatches = Vector.Add(Vector.One, vOrigMatches) |> dump "vIncrementedMatches"
+    let vIncrementedMatchesZeroed = Vector.ConditionalSelect (Vector.Equals (Vector.One, vIncrementedMatches), Vector.Zero, vIncrementedMatches) |> dump "vIncrementedMatchesZeroed"
+    let vRShiftMatches = Vector.Equals(vOrig, vOrigRShift) |> dump "vRShiftMatches"
+    let vRShiftMatchesFirstCol = Vector.BitwiseOr(Constants.vAlwaysIncludeRowStartIndicies, vRShiftMatches) |> dump "vRShiftMatchesFirstCol"
+
+    printfn ""
+
+    let vZeroedOrig = Vector.Multiply(vOrig, Vector.Multiply(-1s, vRShiftMatchesFirstCol)) |> dump "vZeroedOrig"
+    let vIncremented = Vector.Max(vIncrementedMatchesZeroed, vZeroedOrig) |> dump "vIncremented"
+    let vResult = Vector.ConditionalSelect (vLandRMatchesNonZero, vOrig, vIncremented) |> dump "vResult"
 
     vResult.CopyTo(cells, 1)
     let mem = NativePtr.stackalloc<int16>(16)
@@ -307,11 +336,15 @@ let inline pack (cells:int16[]) =
     cells
 
 let inline swipe (board:inref<Board>) direction =
+    printfn "%A\n" board.Cells
     rotateDirection board.Cells direction
     pack board.Cells |> ignore
     let score = swipeSIMD board.Cells
+    printfn "%A\n" board.Cells
     pack board.Cells |> ignore
+    printfn "%A\n" board.Cells
     rotateOppositeDirection board.Cells direction
+    printfn "%A\n" board.Cells
     board.SetScore (board.Score + int score)
 
 let trySwipe (board:Board) direction =
