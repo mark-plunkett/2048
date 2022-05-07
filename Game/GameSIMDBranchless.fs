@@ -39,13 +39,6 @@ type Board =
     member this.SetScore(score) =
         this.Score <- score
 
-//type Board(size, cells:int16[], rng, rngSeed) = 
-//    member val Score = 0 with get, set
-//    member _.Size = size
-//    member _.Cells = cells
-//    member _.RNG = rng
-//    member _.RNGSeed = rngSeed
-
 module Board =
 
     type PosGenerator() =
@@ -99,22 +92,18 @@ module Board =
         Board(board.Size, Array.copy board.Cells, random, board.RNGSeed)
 
     let toString (board:Board) =
-        // printfn "pretostring %A\n" board.Cells
         let newLine = Environment.NewLine
-        let s = 
-            board.Cells
-            |> Array.skip 1
-            |> Array.take 16
-            |> Array.indexed
-            |> Array.fold (fun acc (i, v) ->
-                acc
-                    + if i % board.Size = 0 then newLine + newLine else String.Empty
-                    + match v with
-                        | 0s -> "    -"
-                        | v -> sprintf "%5i" <| int (2.0 ** float v)
-            ) newLine
-        // printfn "post tostring %A\n" board.Cells
-        s
+        board.Cells
+        |> Array.skip 1
+        |> Array.take 16
+        |> Array.indexed
+        |> Array.fold (fun acc (i, v) ->
+            acc
+                + if i % board.Size = 0 then newLine + newLine else String.Empty
+                + match v with
+                    | 0s -> "    -"
+                    | v -> sprintf "%5i" <| int (2.0 ** float v)
+        ) newLine
 
     let fromList (cells:int list list) =
         let empty = emptyCells 4
@@ -173,59 +162,22 @@ module Constants =
         11uy, 12uy, 13uy, 14uy)
 
     let vIgnoreRowStartIndicies = Vector([|
-        0s
-        -1s
-        -1s
-        -1s
-        0s
-        -1s
-        -1s
-        -1s
-        0s
-        -1s
-        -1s
-        -1s
-        0s
-        -1s
-        -1s
-        -1s |])
+        0s; -1s; -1s; -1s
+        0s; -1s; -1s; -1s
+        0s; -1s; -1s; -1s
+        0s; -1s; -1s; -1s |])
 
     let vIgnoreRowEndIndicies = Vector([|
-        -1s
-        -1s
-        -1s
-        0s
-        -1s
-        -1s
-        -1s
-        0s
-        -1s
-        -1s
-        -1s
-        0s
-        -1s
-        -1s
-        -1s
-        0s |])
+        -1s; -1s; -1s; 0s
+        -1s; -1s; -1s; 0s
+        -1s; -1s; -1s; 0s
+        -1s; -1s; -1s; 0s |])
 
     let vAlwaysIncludeRowStartIndicies = Vector([|
-        -1s
-        0s
-        0s
-        0s
-        -1s
-        0s
-        0s
-        0s
-        -1s
-        0s
-        0s
-        0s
-        -1s
-        0s
-        0s
-        0s |])
-
+        -1s; 0s; 0s; 0s
+        -1s; 0s; 0s; 0s
+        -1s; 0s; 0s; 0s
+        -1s; 0s; 0s; 0s |])
 
 let dump msg (o : Vector<int16>) = 
     // let o' = [4..7] |> List.map (fun i -> sprintf "%i " o.[i]) |> fun s -> String.Join ("", s)
@@ -260,24 +212,24 @@ let swipeSIMD (cells:int16[]) =
     let vOrigLShift = Vector (cells, 2)
     let vOrigLShiftZeroed = Vector.BitwiseAnd (Constants.vIgnoreRowEndIndicies, vOrigLShift)
     let vLShiftMatches = Vector.Equals (vOrig, vOrigLShiftZeroed)
-    let vLShiftMatches' = Vector.ConditionalSelect (Vector.GreaterThan (vOrigLShiftZeroed, Vector.Zero), vLShiftMatches, Vector.Zero)
+    let vLShiftMatchesNonZero = Vector.ConditionalSelect (Vector.GreaterThan (vOrigLShiftZeroed, Vector.Zero), vLShiftMatches, Vector.Zero)
 
     let vOrigRShift = shuffleVec (vOrig.AsVector256()) Constants.rotateRightMask |> Vector256.AsVector
     let vOrigRShiftZeroed = Vector.BitwiseAnd (Constants.vIgnoreRowStartIndicies, vOrigRShift)
     let vRShiftMatches = Vector.Equals (vOrig, vOrigRShiftZeroed)
-    let vRShiftMatches' = Vector.ConditionalSelect (Vector.GreaterThan (vOrigRShiftZeroed, Vector.Zero), vRShiftMatches, Vector.Zero)
+    let vRShiftMatchesNonZero = Vector.ConditionalSelect (Vector.GreaterThan (vOrigRShiftZeroed, Vector.Zero), vRShiftMatches, Vector.Zero)
 
-    let vBothMatches = Vector.BitwiseAnd (vLShiftMatches', vRShiftMatches')
-    let vRMatchesNotBoth = Vector.Xor (vRShiftMatches', vBothMatches)
+    let vBothMatches = Vector.BitwiseAnd (vLShiftMatchesNonZero, vRShiftMatchesNonZero)
+    let vRMatchesNotBoth = Vector.Xor (vRShiftMatchesNonZero, vBothMatches)
     let vOrigZeroed = Vector.ConditionalSelect (vRMatchesNotBoth, Vector.Zero, vOrig)
 
-    let vLMatchesNotBoth = Vector.Xor (vLShiftMatches', vBothMatches)
+    let vLMatchesNotBoth = Vector.Xor (vLShiftMatchesNonZero, vBothMatches)
     let vIncOrig = Vector.Add (vOrigZeroed, Vector.One)
     let vResult = Vector.ConditionalSelect (vLMatchesNotBoth, vIncOrig, vOrigZeroed)
 
     vResult.CopyTo (cells, 1)
-    let mem = NativePtr.stackalloc<int16>(16)
-    let scores = Span<int16>(NativePtr.toVoidPtr mem, 16)
+    let mem = NativePtr.stackalloc<int16> (16)
+    let scores = Span<int16> (NativePtr.toVoidPtr mem, 16)
     let mutable scoreA = 0s
     let mutable scoreB = 0s
     let mutable scoreC = 0s
@@ -289,13 +241,13 @@ let swipeSIMD (cells:int16[]) =
         scoreD <- scoreD + scores.[i]
     
     (scoreA + scoreB) + (scoreC + scoreD)
-    
+
 let inline rotateCopy (cells:int16[]) (map:int[]) =
     let cellsCopy = Array.copy cells
     for i = 0 to 15 do
         cellsCopy.[map.[i] + 1] <- cells.[i + 1]
     
-    cellsCopy
+    cellsCopy 
 
 let inline rotateDirection (cells:int16[]) direction =
     match direction with
