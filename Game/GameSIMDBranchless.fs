@@ -256,33 +256,26 @@ let inline shuffle (cellsArray:int16[]) (mask : Vector128<byte>) =
 
 let swipeSIMD (cells:int16[]) =
 
-    let vOrig = Vector (cells, 1) |> dump "vOrig"
-    let vOrigLShift = Vector (cells, 2) |> dump "vOrigLShift"
-    let vOrigLShiftZeroed = Vector.BitwiseAnd (Constants.vIgnoreRowEndIndicies, vOrigLShift) |> dump "vOrigLShiftZeroed"
-    let vLShiftMatches = Vector.BitwiseAnd (vOrig, vOrigLShiftZeroed) |> dump "vLShiftMatches"
+    let vOrig = Vector (cells, 1)
+    let vOrigLShift = Vector (cells, 2)
+    let vOrigLShiftZeroed = Vector.BitwiseAnd (Constants.vIgnoreRowEndIndicies, vOrigLShift)
+    let vLShiftMatches = Vector.Equals (vOrig, vOrigLShiftZeroed)
+    let vLShiftMatches' = Vector.ConditionalSelect (Vector.GreaterThan (vOrigLShiftZeroed, Vector.Zero), vLShiftMatches, Vector.Zero)
 
-    printfn ""
+    let vOrigRShift = shuffleVec (vOrig.AsVector256()) Constants.rotateRightMask |> Vector256.AsVector
+    let vOrigRShiftZeroed = Vector.BitwiseAnd (Constants.vIgnoreRowStartIndicies, vOrigRShift)
+    let vRShiftMatches = Vector.Equals (vOrig, vOrigRShiftZeroed)
+    let vRShiftMatches' = Vector.ConditionalSelect (Vector.GreaterThan (vOrigRShiftZeroed, Vector.Zero), vRShiftMatches, Vector.Zero)
 
-    let vOrigRShift = shuffleVec (vOrig.AsVector256()) Constants.rotateRightMask |> Vector256.AsVector |> dump "vOrigRShift"
-    let vOrigRShiftZeroed = Vector.BitwiseAnd (Constants.vIgnoreRowStartIndicies, vOrigRShift) |> dump "vOrigRShiftZeroed"
-    let vRShiftMatches = Vector.BitwiseAnd (vOrig, vOrigRShiftZeroed) |> dump "vRShiftMatches"
+    let vBothMatches = Vector.BitwiseAnd (vLShiftMatches', vRShiftMatches')
+    let vRMatchesNotBoth = Vector.Xor (vRShiftMatches', vBothMatches)
+    let vOrigZeroed = Vector.ConditionalSelect (vRMatchesNotBoth, Vector.Zero, vOrig)
 
-    printfn ""
-
-    let vBothMatches = Vector.BitwiseAnd (vLShiftMatches, vRShiftMatches) |> dump "vBothMatches"
-    let vRMatchesNotBoth = Vector.Xor (vRShiftMatches, vBothMatches) |> dump "vRMatchesNotBoth"
-    let vOrigZeroed = Vector.ConditionalSelect (vRMatchesNotBoth, Vector.Zero, vOrig) |> dump "vOrigZeroed"
-
-    printfn ""
-
-    let vLMatchesNotBoth = Vector.Xor (vLShiftMatches, vBothMatches) |> dump "vLMatchesNotBoth"
-    let vIncMask = Vector.GreaterThan (vLMatchesNotBoth, Vector.Zero) |> dump "vIncMask"
+    let vLMatchesNotBoth = Vector.Xor (vLShiftMatches', vBothMatches)
     let vIncOrig = Vector.Add (vOrigZeroed, Vector.One)
-    let vResult = Vector.ConditionalSelect (vIncMask, vIncOrig, vOrigZeroed) |> dump "vResult"
+    let vResult = Vector.ConditionalSelect (vLMatchesNotBoth, vIncOrig, vOrigZeroed)
 
-    printfn ""
-
-    vResult.CopyTo(cells, 1)
+    vResult.CopyTo (cells, 1)
     let mem = NativePtr.stackalloc<int16>(16)
     let scores = Span<int16>(NativePtr.toVoidPtr mem, 16)
     let mutable scoreA = 0s
