@@ -117,49 +117,29 @@ module Board =
 
 module Constants =
 
-    let firstOfEachPairMask = Vector256.Create(
-        0uy,
-        2uy,
-        4uy,
-        6uy,
-        8uy,
-        10uy,
-        12uy,
-        14uy,
-        0uy, 0uy, 0uy, 0uy, 0uy, 0uy, 0uy, 0uy,
-        16uy,
-        18uy,
-        20uy,
-        22uy,
-        24uy,
-        26uy,
-        28uy,
-        30uy,
-        0uy, 0uy, 0uy, 0uy, 0uy, 0uy, 0uy, 0uy)
-        
     let antiClockwiseTransposeMap = Vector128.Create(
-        3uy, 7uy, 11uy, 15uy,
-        2uy, 6uy, 10uy, 14uy,
-        1uy, 5uy, 9uy, 13uy,
-        0uy, 4uy, 8uy, 12uy)
+        3y, 7y, 11y, 15y,
+        2y, 6y, 10y, 14y,
+        1y, 5y, 9y, 13y,
+        0y, 4y, 8y, 12y)
 
     let clockwiseTransposeMap = Vector128.Create(
-        12uy, 8uy, 4uy, 0uy,
-        13uy, 9uy, 5uy, 1uy,
-        14uy, 10uy, 6uy, 2uy,
-        15uy, 11uy, 7uy, 3uy)
+        12y, 8y, 4y, 0y,
+        13y, 9y, 5y, 1y,
+        14y, 10y, 6y, 2y,
+        15y, 11y, 7y, 3y)
 
     let flipTransposeMap = Vector128.Create(
-        3uy, 2uy, 1uy, 0uy,
-        7uy, 6uy, 5uy, 4uy,
-        11uy, 10uy, 9uy, 8uy,
-        15uy, 14uy, 13uy, 12uy)
+        3y, 2y, 1y, 0y,
+        7y, 6y, 5y, 4y,
+        11y, 10y, 9y, 8y,
+        15y, 14y, 13y, 12y)
 
     let rotateRightMask = Vector128.Create(
-        15uy, 0uy, 1uy, 2uy,
-        3uy, 4uy, 5uy, 6uy,
-        7uy, 8uy, 9uy, 10uy,
-        11uy, 12uy, 13uy, 14uy)
+        15y, 0y, 1y, 2y,
+        3y, 4y, 5y, 6y,
+        7y, 8y, 9y, 10y,
+        11y, 12y, 13y, 14y)
 
     let vIgnoreRowStartIndicies = Vector([|
         0s; -1s; -1s; -1s
@@ -187,24 +167,19 @@ let dump msg (o : Vector<int16>) =
 let boardPool = ArrayPool(fun _ -> GameSIMD.Board.emptyCells 4)
 let board16Pool = ArrayPool(fun _ -> Array.zeroCreate<int16> 16)
 
-let  shuffleVec (cells : Vector256<int16>) mask =
+let shuffleVec (cells: Vector<int16>) (mask : Vector128<sbyte>) =
+    let cellBytes = Vector.Narrow (cells, cells)
+    let cellBytes128 = cellBytes.AsVector128 ()
+    let shuffledBytes = Ssse3.Shuffle (cellBytes128, mask)
+    let vShuffledBytes = shuffledBytes.AsVector ()
+    let mutable result = Vector ()
+    let mutable discard = Vector ()
+    Vector.Widen (vShuffledBytes, &result, &discard)
+    result
 
-    let cellsBytes = cells.AsByte ()
-    let cellsPacked = Avx2.Shuffle (cellsBytes, Constants.firstOfEachPairMask)
-    let cells128 = cellsPacked.GetLower().WithUpper(cellsPacked.GetUpper().GetLower())
-    let res = Ssse3.Shuffle (cells128, mask)
-    let res256 = res.ToVector256 ()
-    let unpackedLow = Avx2.UnpackLow (res256, Vector256.Zero)
-    let unpackedHigh = Avx2.UnpackHigh (res256, Vector256.Zero)
-    let unpacked = unpackedLow.WithUpper (unpackedHigh.GetLower())
-    unpacked.AsInt16 ()
-
-let  shuffle (cellsArray:int16[]) (mask : Vector128<byte>) =
-
-    let ptr = fixed cellsArray
-    let cells = Avx.LoadVector256 (NativePtr.add ptr 1)
-    let unpacked = shuffleVec cells mask
-    unpacked.AsVector().CopyTo(cellsArray, 1)
+let shuffle (cellsArray:int16[]) (mask : Vector128<sbyte>) =
+    let shuffled = shuffleVec (Vector (cellsArray, 1)) mask
+    shuffled.CopyTo (cellsArray, 1)
 
 let inline collapse i =
     -(-i >>> 15)
@@ -222,7 +197,7 @@ let swipeSIMD (cells:int16[]) =
     let vLShiftMatches = Vector.Equals (vOrig, vOrigLShiftZeroed)
     let vLShiftMatchesNonZero = Vector.ConditionalSelect (Vector.GreaterThan (vOrigLShiftZeroed, Vector.Zero), vLShiftMatches, Vector.Zero)
 
-    let vOrigRShift = shuffleVec (vOrig.AsVector256()) Constants.rotateRightMask |> Vector256.AsVector
+    let vOrigRShift = shuffleVec vOrig Constants.rotateRightMask
     let vOrigRShiftZeroed = Vector.BitwiseAnd (Constants.vIgnoreRowStartIndicies, vOrigRShift)
     let vRShiftMatches = Vector.Equals (vOrig, vOrigRShiftZeroed)
     let vRShiftMatchesNonZero = Vector.ConditionalSelect (Vector.GreaterThan (vOrigRShiftZeroed, Vector.Zero), vRShiftMatches, Vector.Zero)
@@ -291,6 +266,10 @@ let pack (cells:int16[]) =
             cells.[j] <- 0s
             i <- i + 1
         
+    cells
+
+let packBranchless (cells: int16[]) =
+    // shuffle using precomputed masks...?
     cells
 
 let swipe (board:inref<Board>) direction =
