@@ -165,7 +165,6 @@ let dump msg (o : Vector<int16>) =
     o
 
 let boardPool = ArrayPool(fun _ -> GameSIMD.Board.emptyCells 4)
-let board16Pool = ArrayPool(fun _ -> Array.zeroCreate<int16> 16)
 
 let shuffleVec (cells: Vector<int16>) (mask : Vector128<sbyte>) =
     let cellBytes = Vector.Narrow (cells, cells)
