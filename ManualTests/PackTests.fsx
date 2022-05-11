@@ -75,21 +75,31 @@ printfn "%B" index
 let buildMask (s : string) =
     let a = Array.zeroCreate 16
     let chars = s.ToCharArray()
+    let mutable anyZero = -1
     for k = 0 to 3 do
         for i = 0 to 3 do
             let baseIdx = (k * 4)
             let idx = baseIdx + i
+            if anyZero = -1 && chars[idx] = '0' then
+                anyZero <- idx
+
             let mutable j = idx
-            while chars[j] = '0' && j < baseIdx + 3 do
+            let maxJ = baseIdx + 3
+            while j < maxJ + 1 && chars[j] = '0' do
                 j <- j + 1
                 
-            a[idx] <- j
-            chars[idx] <- '0'
-            chars[j] <- '0'
+            printfn "idx: %i j: %i maxj: %i" idx j maxJ
+            if j > maxJ then
+                a[idx] <- anyZero
+            else
+                a[idx] <- j
+                chars[j] <- '0'
     
     a
 
-let m = buildMask "0011000110000000"
+// 2 3 0 0, 7 0 0 0, 8 0 0 0, 0 0 0 0
+// let m = buildMask "0011000110000000"
+let m = buildMask "0111111111110111"
 
 let pack (cells:int16[]) =
     // Indicies account for vector padding
