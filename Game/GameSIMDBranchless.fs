@@ -253,7 +253,8 @@ let packMap =
     Seq.init (int UInt16.MaxValue + 1) (id)
     |> Seq.fold (fun (a : Vector128<sbyte>[]) i -> 
         let bits = iToBits i
-        a[buildIndex bits] <- bits |> buildMask |> aToVec128
+        let bitsSpan = Span (bits)
+        a[buildIndex bitsSpan] <- bits |> buildMask |> aToVec128
         a
     ) (Array.zeroCreate (int UInt16.MaxValue + 1))
 
