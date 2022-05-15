@@ -68,5 +68,26 @@ let oneStep () =
 
 [<EntryPoint>]
 let main argv =
-    gameSim ()
+    let size = 4
+    let r = Random()
+    let seed = r.Next()
+    let numRuns = 1
+
+    let monteNumBranches = 100
+    let monteNumMoves = 100
+
+    let boardSIMDBranchless = GameSIMDBranchless.boardContext.CreateWithSeed size seed
+    let dirFactorySIMDBranchless = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameSIMDBranchless.boardContext
+
+
+    let rec runLoop dirFactory numRuns context board =
+        if numRuns = 0 then
+            board
+        else
+            dirFactory board
+            |> context.TrySwipe board
+            |> runLoop dirFactory (numRuns - 1) context
+
+    runLoop dirFactorySIMDBranchless numRuns GameSIMDBranchless.boardContext boardSIMDBranchless
+
     0

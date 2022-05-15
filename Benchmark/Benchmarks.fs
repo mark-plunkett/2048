@@ -53,7 +53,7 @@ type Benchmarks () =
     member this.Dict () =
         runLoop dirFactoryDict numRuns GameDict.boardContext boardDict
 
-    [<Benchmark>]
+    // [<Benchmark>]
     member this.Array () =
         runLoop dirFactoryArray numRuns GameArray.boardContext boardArray
 

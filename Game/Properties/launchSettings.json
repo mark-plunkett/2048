@@ -1,8 +1,7 @@
 {
   "profiles": {
     "Game": {
-      "commandName": "Project",
-      "commandLineArgs": "--montecarlo 10 100"
+      "commandName": "Project"
     }
   }
 }

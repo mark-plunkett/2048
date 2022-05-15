@@ -68,12 +68,13 @@ module Board =
 
     let addRandomCell (board:inref<Board>) =
         let rec addRec value (board:Board) =
-            let i = 1 + PosGenerator.Next()
-            if board.Cells.[i] = 0s then
-                board.Cells.[i] <- value
+            let i = PosGenerator.Next()
+            if board.Cells.[i + 1] = 0s then
+                board.Cells.[i + 1] <- value
                 board
             else
                 addRec value board
+
         let value = randomValue board
         addRec value board
 
@@ -249,13 +250,12 @@ let buildIndex (cells: Span<int16>) =
     index
 
 let packMap = 
-    Seq.init (int UInt16.MaxValue) (id)
+    Seq.init (int UInt16.MaxValue + 1) (id)
     |> Seq.fold (fun (a : Vector128<sbyte>[]) i -> 
-        // have to pad array with an extra start element
-        let bits = Array.concat [| [|0s|]; iToBits i |]
+        let bits = iToBits i
         a[buildIndex bits] <- bits |> buildMask |> aToVec128
         a
-    ) (Array.zeroCreate (int UInt16.MaxValue))
+    ) (Array.zeroCreate (int UInt16.MaxValue + 1))
 
 let dump msg (o : Vector<int16>) = 
     // let o' = [4..7] |> List.map (fun i -> sprintf "%i " o.[i]) |> fun s -> String.Join ("", s)
@@ -365,16 +365,14 @@ let pack (cells : Span<int16>) =
 
 let packBranchless (cells: Span<int16>) =
     let packIndex = buildIndex cells
-    let r = packMap[packIndex]
-    printfn "i: %i r: %A" packIndex r
     shuffle cells packMap[packIndex]
 
 let swipe (board:inref<Board>) direction =
     let cells = Span (board.Cells, 1, 16)
     rotateDirection cells direction
-    let _ = pack cells
+    let _ = packBranchless cells
     let score = swipeSIMD board.Cells
-    let _ = pack cells
+    let _ = packBranchless cells
     rotateOppositeDirection cells direction
     board.SetScore (board.Score + int score)
 
