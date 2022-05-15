@@ -346,23 +346,6 @@ let  rotateOppositeDirection (cells : Span<int16>) direction =
     | Up -> shuffle cells Constants.clockwiseTransposeMap
     | Down -> shuffle cells Constants.antiClockwiseTransposeMap
 
-let pack (cells : Span<int16>) =
-    // Indicies account for vector padding
-    let mutable i = 0
-    for j = 1 to cells.Length - 1 do
-        let vi = cells.[i]
-        let vj = cells.[j]
-        if (j % 4) = 0 then
-            i <- j
-        elif vi > 0s then
-            i <- i + 1
-        elif vj > 0s then
-            cells.[i] <- vj
-            cells.[j] <- 0s
-            i <- i + 1
-        
-    cells
-
 let packBranchless (cells: Span<int16>) =
     let packIndex = buildIndex cells
     shuffle cells packMap[packIndex]
