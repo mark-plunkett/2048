@@ -211,7 +211,7 @@ let aToVec128 (a : sbyte[]) =
 let inline collapse16 i =
     -(-i >>> 15)
 
-let buildIndex (cells: int16[]) =
+let buildIndex (cells: Span<int16>) =
 
     let mutable index = 0
     let i0 = cells.[0] |> collapse16 |> int
@@ -274,16 +274,17 @@ let shuffleVec (cells: Vector<int16>) (mask : Vector128<sbyte>) =
     Vector.Widen (vShuffledBytes, &result, &discard)
     result
 
-let shuffle (cells:int16[]) (mask : Vector128<sbyte>) =
-    let shuffled = shuffleVec (Vector (cells, 1)) mask
-    shuffled.CopyTo (cells, 1)
+let shuffle (cells : Span<int16>) (mask : Vector128<sbyte>) =
+    let vec = Vector<int16> (cells)
+    let shuffled = shuffleVec vec mask
+    shuffled.CopyTo (cells)
 
 let inline calcScore (scores: Span<int16>) i =
     let score = int scores.[i]
     let pow = 1 <<< score
     (collapse16 score) * pow |> int16
 
-let swipeSIMD (cells:int16[]) =
+let swipeSIMD (cells : int16[]) =
 
     let vOrig = Vector (cells, 1)
     let vOrigLShift = Vector (cells, 2)
@@ -331,39 +332,50 @@ let  rotateCopy (cells:int16[]) (map:int[]) =
     
     cellsCopy 
 
-let  rotateDirection (cells:int16[]) direction =
+let  rotateDirection (cells : Span<int16>) direction =
     match direction with
     | Left -> ()
     | Right -> shuffle cells Constants.flipTransposeMap
     | Up -> shuffle cells Constants.antiClockwiseTransposeMap
     | Down -> shuffle cells Constants.clockwiseTransposeMap
 
-let  rotateOppositeDirection (cells:int16[]) direction =
+let  rotateOppositeDirection (cells : Span<int16>) direction =
     match direction with
     | Left -> ()
     | Right -> shuffle cells Constants.flipTransposeMap
     | Up -> shuffle cells Constants.clockwiseTransposeMap
     | Down -> shuffle cells Constants.antiClockwiseTransposeMap
 
-let pack (cells:int16[]) =
+let pack (cells : Span<int16>) =
+    // Indicies account for vector padding
+    let mutable i = 0
+    for j = 1 to cells.Length - 1 do
+        let vi = cells.[i]
+        let vj = cells.[j]
+        if (j % 4) = 0 then
+            i <- j
+        elif vi > 0s then
+            i <- i + 1
+        elif vj > 0s then
+            cells.[i] <- vj
+            cells.[j] <- 0s
+            i <- i + 1
+        
+    cells
+
+let packBranchless (cells: Span<int16>) =
     let packIndex = buildIndex cells
     let r = packMap[packIndex]
     printfn "i: %i r: %A" packIndex r
-    
-    printfn "pre cells: %A" cells
     shuffle cells packMap[packIndex]
-    printfn "post cells: %A" cells
-
-let packBranchless (cells: int16[]) =
-    // shuffle using precomputed masks...?
-    cells
 
 let swipe (board:inref<Board>) direction =
-    rotateDirection board.Cells direction
-    pack board.Cells |> ignore
+    let cells = Span (board.Cells, 1, 16)
+    rotateDirection cells direction
+    let _ = pack cells
     let score = swipeSIMD board.Cells
-    pack board.Cells |> ignore
-    rotateOppositeDirection board.Cells direction
+    let _ = pack cells
+    rotateOppositeDirection cells direction
     board.SetScore (board.Score + int score)
 
 let trySwipe (board:Board) direction =
