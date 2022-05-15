@@ -8,10 +8,10 @@
         "type": "coreclr",
         "request": "launch",
         "preLaunchTask": "build",
-        "program": "${workspaceFolder}/Game/bin/Debug/netcoreapp3.1/Game.exe",
+        "program": "${workspaceFolder}/Game/bin/Debug/net6.0/Game.dll",
         "args": [],
         "cwd": "${workspaceFolder}",
         "stopAtEntry": false,
-        "console": "internalConsole"
+        "console": "externalTerminal"
     }]
 }

@@ -159,6 +159,104 @@ module Constants =
         -1s; 0s; 0s; 0s
         -1s; 0s; 0s; 0s |])
 
+let iToBits (i : int) =
+    Convert.ToString (i, 2)
+    |> fun s -> s.PadLeft (16, '0')
+    |> fun s -> s.ToCharArray ()
+    |> Array.map string
+    |> Array.map Int16.Parse
+
+let buildMask (cells : int16[]) =
+    let a = Array.zeroCreate 16
+    let mutable anyZero = -1
+    for k = 0 to 3 do
+        for i = 0 to 3 do
+            let baseIdx = (k * 4)
+            let idx = baseIdx + i
+            if anyZero = -1 && cells[idx] = 0s then
+                anyZero <- idx
+
+            let mutable j = idx
+            let maxJ = baseIdx + 3
+            while j < maxJ + 1 && cells[j] = 0s do
+                j <- j + 1
+                
+            if j > maxJ then
+                a[idx] <- sbyte anyZero
+            else
+                a[idx] <- sbyte j
+                cells[j] <- 0s
+    
+    a
+
+let aToVec128 (a : sbyte[]) =
+    Vector128.Create(
+        a[0],
+        a[1],
+        a[2],
+        a[3],
+        a[4],
+        a[5],
+        a[6],
+        a[7],
+        a[8],
+        a[9],
+        a[10],
+        a[11],
+        a[12],
+        a[13],
+        a[14],
+        a[15])
+
+let inline collapse16 i =
+    -(-i >>> 15)
+
+let buildIndex (cells: int16[]) =
+
+    let mutable index = 0
+    let i0 = cells.[0] |> collapse16 |> int
+    index <- index ||| (i0 <<< 0)
+    let i1 = cells.[1] |> collapse16 |> int
+    index <- index ||| (i1 <<< 1)
+    let i2 = cells.[2] |> collapse16 |> int
+    index <- index ||| (i2 <<< 2)
+    let i3 = cells.[3] |> collapse16 |> int
+    index <- index ||| (i3 <<< 3)
+    let i4 = cells[4]  |> collapse16 |> int
+    index <- index ||| (i4 <<< 4)
+    let i5 = cells[5]  |> collapse16 |> int
+    index <- index ||| (i5 <<< 5)
+    let i6 = cells[6]  |> collapse16 |> int
+    index <- index ||| (i6 <<< 6)
+    let i7 = cells[7]  |> collapse16 |> int
+    index <- index ||| (i7 <<< 7)
+    let i8 = cells[8]  |> collapse16 |> int
+    index <- index ||| (i8 <<< 8)
+    let i9 = cells[9]  |> collapse16 |> int
+    index <- index ||| (i9 <<< 9)
+    let i10 = cells[10] |> collapse16 |> int
+    index <- index ||| (i10 <<< 10)
+    let i11 = cells[11] |> collapse16 |> int
+    index <- index ||| (i11 <<< 11)
+    let i12 = cells[12] |> collapse16 |> int
+    index <- index ||| (i12 <<< 12)
+    let i13 = cells[13] |> collapse16 |> int
+    index <- index ||| (i13 <<< 13)
+    let i14 = cells[14] |> collapse16 |> int
+    index <- index ||| (i14 <<< 14)
+    let i15 = cells[15] |> collapse16 |> int
+    index <- index ||| (i15 <<< 15)
+    index
+
+let packMap = 
+    Seq.init (int UInt16.MaxValue) (id)
+    |> Seq.fold (fun (a : Vector128<sbyte>[]) i -> 
+        // have to pad array with an extra start element
+        let bits = Array.concat [| [|0s|]; iToBits i |]
+        a[buildIndex bits] <- bits |> buildMask |> aToVec128
+        a
+    ) (Array.zeroCreate (int UInt16.MaxValue))
+
 let dump msg (o : Vector<int16>) = 
     // let o' = [4..7] |> List.map (fun i -> sprintf "%i " o.[i]) |> fun s -> String.Join ("", s)
     printfn "%30s: %A" msg o
@@ -176,17 +274,14 @@ let shuffleVec (cells: Vector<int16>) (mask : Vector128<sbyte>) =
     Vector.Widen (vShuffledBytes, &result, &discard)
     result
 
-let shuffle (cellsArray:int16[]) (mask : Vector128<sbyte>) =
-    let shuffled = shuffleVec (Vector (cellsArray, 1)) mask
-    shuffled.CopyTo (cellsArray, 1)
-
-let inline collapse i =
-    -(-i >>> 15)
+let shuffle (cells:int16[]) (mask : Vector128<sbyte>) =
+    let shuffled = shuffleVec (Vector (cells, 1)) mask
+    shuffled.CopyTo (cells, 1)
 
 let inline calcScore (scores: Span<int16>) i =
     let score = int scores.[i]
     let pow = 1 <<< score
-    (collapse score) * pow |> int16
+    (collapse16 score) * pow |> int16
 
 let swipeSIMD (cells:int16[]) =
 
@@ -251,21 +346,13 @@ let  rotateOppositeDirection (cells:int16[]) direction =
     | Down -> shuffle cells Constants.antiClockwiseTransposeMap
 
 let pack (cells:int16[]) =
-    // Indicies account for vector padding
-    let mutable i = 1
-    for j = 2 to cells.Length - 2 do
-        let vi = cells.[i]
-        let vj = cells.[j]
-        if (j % 4) = 1 then
-            i <- j
-        elif vi > 0s then
-            i <- i + 1
-        elif vj > 0s then
-            cells.[i] <- vj
-            cells.[j] <- 0s
-            i <- i + 1
-        
-    cells
+    let packIndex = buildIndex cells
+    let r = packMap[packIndex]
+    printfn "i: %i r: %A" packIndex r
+    
+    printfn "pre cells: %A" cells
+    shuffle cells packMap[packIndex]
+    printfn "post cells: %A" cells
 
 let packBranchless (cells: int16[]) =
     // shuffle using precomputed masks...?

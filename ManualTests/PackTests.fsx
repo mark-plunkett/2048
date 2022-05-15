@@ -1,7 +1,11 @@
+#r "../Game/bin/Debug/net6.0/Game.dll"
+
 open System
 open System.Collections
 open System.Numerics
 open System.Text
+open System.Runtime.Intrinsics
+open GameSIMDBranchless
 
 let inline collapse16 i =
     -(-i >>> 15)
@@ -28,6 +32,65 @@ let temp () =
     let cellBits = Array.zeroCreate<int16> 16
     v2.CopyTo (cellBits)
 
+// 0 0 1 2
+// 3 4 0 0
+
+let buildMask (cells : int16[]) =
+    let a = Array.zeroCreate 16
+    let mutable anyZero = -1
+    for k = 0 to 3 do
+        for i = 0 to 3 do
+            let baseIdx = (k * 4)
+            let idx = baseIdx + i
+            if anyZero = -1 && cells[idx] = 0s then
+                anyZero <- idx
+
+            let mutable j = idx
+            let maxJ = baseIdx + 3
+            while j < maxJ + 1 && cells[j] = 0s do
+                j <- j + 1
+                
+            if j > maxJ then
+                a[idx] <- sbyte anyZero
+            else
+                a[idx] <- sbyte j
+                cells[j] <- 0s
+    
+    a
+
+// 2 3 0 0, 7 0 0 0, 8 0 0 0, 0 0 0 0
+// let m = buildMask "0011000110000000"
+
+let m = buildMask cells
+
+let aToVec128 (a : sbyte[]) =
+    Vector128.Create(
+        a[0],
+        a[1],
+        a[2],
+        a[3],
+        a[4],
+        a[5],
+        a[6],
+        a[7],
+        a[8],
+        a[9],
+        a[10],
+        a[11],
+        a[12],
+        a[13],
+        a[14],
+        a[15])
+
+let vMask = aToVec128 m
+
+let cells' = Array.zeroCreate 17
+Array.blit cells 0 cells' 1 16
+GameSIMDBranchless.shuffle cells' vMask
+cells'
+
+// let t = buildMask "0010000000000000"
+// t
 
 let buildIndex (cells: int16[]) =
 
@@ -69,67 +132,40 @@ let buildIndex (cells: int16[]) =
 let index = buildIndex cells
 printfn "%B" index
 
-// 0 0 1 2
-// 3 4 0 0
+let iToBits (i : int) =
+    Convert.ToString (i, 2)
+    |> fun s -> s.PadLeft (16, '0')
+    |> fun s -> s.ToCharArray ()
+    |> Array.map string
+    |> Array.map Int16.Parse
 
-let buildMask (s : string) =
-    let a = Array.zeroCreate 16
-    let chars = s.ToCharArray()
-    let mutable anyZero = -1
-    for k = 0 to 3 do
-        for i = 0 to 3 do
-            let baseIdx = (k * 4)
-            let idx = baseIdx + i
-            if anyZero = -1 && chars[idx] = '0' then
-                anyZero <- idx
+let i = iToBits 2
 
-            let mutable j = idx
-            let maxJ = baseIdx + 3
-            while j < maxJ + 1 && chars[j] = '0' do
-                j <- j + 1
-                
-            printfn "idx: %i j: %i maxj: %i" idx j maxJ
-            if j > maxJ then
-                a[idx] <- anyZero
-            else
-                a[idx] <- j
-                chars[j] <- '0'
-    
-    a
-
-// 2 3 0 0, 7 0 0 0, 8 0 0 0, 0 0 0 0
-// let m = buildMask "0011000110000000"
-let m = buildMask "0111111111110111"
-
-let pack (cells:int16[]) =
-    // Indicies account for vector padding
-    let a = Array.zeroCreate 16
-    let mutable i = 0
-    for j = 1 to cells.Length - 1 do
-        let vi = cells.[i]
-        let vj = cells.[j]
-        if (j % 4) = 1 then
-            i <- j
-        elif vi > 0s then
-            i <- i + 1
-        elif vj > 0s then
-            cells.[i] <- vj
-            cells.[j] <- 0s
-            i <- i + 1
-        
-    cells
-
-
-let t = buildMask "0010000000000000"
-t
-
-for i = 0 to 4 do //int UInt16.MaxValue do
+for i = 0 to 15 do //int UInt16.MaxValue / 16 do
     // get string
     let iString = 
-        Convert.ToString (i, 2)
-        |> fun s -> s.PadLeft (16, '0')
-        |> fun s -> s.ToCharArray () |> Array.map string
-        |> Array.map Int16.Parse
+        i
+        |> iToBits
+        |> fun a ->
+            printfn "%A" a
+            a
         |> buildIndex
 
     printfn "%i" iString
+
+let packMap = Array.zeroCreate (int UInt16.MaxValue)
+for i = 0 to (int UInt16.MaxValue) - 1 do
+    let bits = iToBits i
+    packMap[buildIndex bits] <- buildMask bits |> aToVec128
+
+
+let cells2 = [|
+    1s; 2s; 0s; 4s;
+    0s; 0s; 7s; 8s;
+    0s; 0s; 0s; 0s;
+    0s; 3s; 0s; 9s |]
+
+cells2
+let cellsIndex = buildIndex cells2
+let mask' = packMap[cellsIndex]
+
