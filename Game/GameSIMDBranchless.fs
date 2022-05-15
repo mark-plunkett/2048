@@ -212,7 +212,7 @@ let aToVec128 (a : sbyte[]) =
 let inline collapse16 i =
     -(-i >>> 15)
 
-let buildIndex (cells: Span<int16>) =
+let inline buildIndex (cells: Span<int16>) =
 
     let mutable index = 0
     let i0 = cells.[0] |> collapse16 |> int
@@ -264,7 +264,7 @@ let dump msg (o : Vector<int16>) =
 
 let boardPool = ArrayPool(fun _ -> GameSIMD.Board.emptyCells 4)
 
-let shuffleVec (cells: Vector<int16>) (mask : Vector128<sbyte>) =
+let inline shuffleVec (cells: Vector<int16>) (mask : Vector128<sbyte>) =
     let cellBytes = Vector.Narrow (cells, cells)
     let cellBytes128 = cellBytes.AsVector128 ()
     let shuffledBytes = Ssse3.Shuffle (cellBytes128, mask)
@@ -274,7 +274,7 @@ let shuffleVec (cells: Vector<int16>) (mask : Vector128<sbyte>) =
     Vector.Widen (vShuffledBytes, &result, &discard)
     result
 
-let shuffle (cells : Span<int16>) (mask : Vector128<sbyte>) =
+let inline shuffle (cells : Span<int16>) (mask : Vector128<sbyte>) =
     let vec = Vector<int16> (cells)
     let shuffled = shuffleVec vec mask
     shuffled.CopyTo (cells)
@@ -284,7 +284,7 @@ let inline calcScore (scores: Span<int16>) i =
     let pow = 1 <<< score
     (collapse16 score) * pow |> int16
 
-let swipeSIMD (cells : int16[]) =
+let inline swipeSIMD (cells : int16[]) =
 
     let vOrig = Vector (cells, 1)
     let vOrigLShift = Vector (cells, 2)
@@ -325,28 +325,28 @@ let swipeSIMD (cells : int16[]) =
     
     (scoreA + scoreB) + (scoreC + scoreD)
 
-let  rotateCopy (cells:int16[]) (map:int[]) =
+let inline rotateCopy (cells:int16[]) (map:int[]) =
     let cellsCopy = Array.copy cells
     for i = 0 to 15 do
         cellsCopy.[map.[i] + 1] <- cells.[i + 1]
     
     cellsCopy 
 
-let  rotateDirection (cells : Span<int16>) direction =
+let inline rotateDirection (cells : Span<int16>) direction =
     match direction with
     | Left -> ()
     | Right -> shuffle cells Constants.flipTransposeMap
     | Up -> shuffle cells Constants.antiClockwiseTransposeMap
     | Down -> shuffle cells Constants.clockwiseTransposeMap
 
-let  rotateOppositeDirection (cells : Span<int16>) direction =
+let inline rotateOppositeDirection (cells : Span<int16>) direction =
     match direction with
     | Left -> ()
     | Right -> shuffle cells Constants.flipTransposeMap
     | Up -> shuffle cells Constants.clockwiseTransposeMap
     | Down -> shuffle cells Constants.antiClockwiseTransposeMap
 
-let packBranchless (cells: Span<int16>) =
+let inline packBranchless (cells: Span<int16>) =
     let packIndex = buildIndex cells
     shuffle cells packMap[packIndex]
 
