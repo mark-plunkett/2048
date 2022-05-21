@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Benchmarks.fs" />
+    <Compile Include="BuildIndexBenchmarks.fs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.fs" />

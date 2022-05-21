@@ -1,6 +1,7 @@
 ﻿open System
 open BenchmarkDotNet.Running
 open Benchmark
+open BuildIndexBenchmarks
 
 [<EntryPoint>]
 let main argv =

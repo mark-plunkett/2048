@@ -160,6 +160,8 @@ module Constants =
         -1s; 0s; 0s; 0s
         -1s; 0s; 0s; 0s |])
 
+    let firstBit = 1uy
+
 let iToBits (i : int) =
     Convert.ToString (i, 2)
     |> fun s -> s.PadLeft (16, '0')
@@ -212,49 +214,20 @@ let aToVec128 (a : sbyte[]) =
 let inline collapse16 i =
     -(-i >>> 15)
 
-let inline buildIndex (cells: Span<int16>) =
+let inline buildIndexBranchless (cells : Span<int16>) =
 
-    let mutable index = 0
-    let i0 = cells.[0] |> collapse16 |> int
-    index <- index ||| (i0 <<< 0)
-    let i1 = cells.[1] |> collapse16 |> int
-    index <- index ||| (i1 <<< 1)
-    let i2 = cells.[2] |> collapse16 |> int
-    index <- index ||| (i2 <<< 2)
-    let i3 = cells.[3] |> collapse16 |> int
-    index <- index ||| (i3 <<< 3)
-    let i4 = cells[4]  |> collapse16 |> int
-    index <- index ||| (i4 <<< 4)
-    let i5 = cells[5]  |> collapse16 |> int
-    index <- index ||| (i5 <<< 5)
-    let i6 = cells[6]  |> collapse16 |> int
-    index <- index ||| (i6 <<< 6)
-    let i7 = cells[7]  |> collapse16 |> int
-    index <- index ||| (i7 <<< 7)
-    let i8 = cells[8]  |> collapse16 |> int
-    index <- index ||| (i8 <<< 8)
-    let i9 = cells[9]  |> collapse16 |> int
-    index <- index ||| (i9 <<< 9)
-    let i10 = cells[10] |> collapse16 |> int
-    index <- index ||| (i10 <<< 10)
-    let i11 = cells[11] |> collapse16 |> int
-    index <- index ||| (i11 <<< 11)
-    let i12 = cells[12] |> collapse16 |> int
-    index <- index ||| (i12 <<< 12)
-    let i13 = cells[13] |> collapse16 |> int
-    index <- index ||| (i13 <<< 13)
-    let i14 = cells[14] |> collapse16 |> int
-    index <- index ||| (i14 <<< 14)
-    let i15 = cells[15] |> collapse16 |> int
-    index <- index ||| (i15 <<< 15)
-    index
+    let vCells = Vector<int16> (cells)
+    let vGreaterThanZero = Vector.GreaterThan (vCells, Vector.Zero)
+    let vBytes = Vector.Narrow (vGreaterThanZero, vGreaterThanZero)
+    let vLower = vBytes.AsVector128 ()
+    Sse2.MoveMask (vLower)
 
 let packMap = 
     Seq.init (int UInt16.MaxValue + 1) (id)
     |> Seq.fold (fun (a : Vector128<sbyte>[]) i -> 
         let bits = iToBits i
         let bitsSpan = Span (bits)
-        a[buildIndex bitsSpan] <- bits |> buildMask |> aToVec128
+        a[buildIndexBranchless bitsSpan] <- bits |> buildMask |> aToVec128
         a
     ) (Array.zeroCreate (int UInt16.MaxValue + 1))
 
@@ -281,9 +254,10 @@ let inline shuffle (cells : Span<int16>) (mask : Vector128<sbyte>) =
     shuffled.CopyTo (cells)
 
 let inline calcScore (scores: Span<int16>) i =
-    let score = int scores.[i]
-    let pow = 1 <<< score
-    (collapse16 score) * pow |> int16
+    let score = scores.[i]
+    let score32 = int score
+    let pow = 1 <<< score32
+    (int (collapse16 score)) * pow |> int16
 
 let inline swipeSIMD (cells : int16[]) =
 
@@ -348,7 +322,7 @@ let inline rotateOppositeDirection (cells : Span<int16>) direction =
     | Down -> shuffle cells Constants.antiClockwiseTransposeMap
 
 let inline packBranchless (cells: Span<int16>) =
-    let packIndex = buildIndex cells
+    let packIndex = buildIndexBranchless cells
     shuffle cells packMap[packIndex]
 
 let swipe (board:inref<Board>) direction =

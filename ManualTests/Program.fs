@@ -66,8 +66,7 @@ let oneStep () =
     Array.blit cells' 0 board.Cells 0 18
     GameSIMDBranchless.swipe &board Left |> ignore
 
-[<EntryPoint>]
-let main argv =
+let simBenchmark () =
     let size = 4
     let r = Random()
     let seed = r.Next()
@@ -89,5 +88,12 @@ let main argv =
             |> runLoop dirFactory (numRuns - 1) context
 
     runLoop dirFactorySIMDBranchless numRuns GameSIMDBranchless.boardContext boardSIMDBranchless
+
+[<EntryPoint>]
+let main argv =
+
+    gameSim()
+
+    
 
     0
