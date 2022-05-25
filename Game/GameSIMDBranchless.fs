@@ -154,14 +154,6 @@ module Constants =
         -1s; -1s; -1s; 0s
         -1s; -1s; -1s; 0s |])
 
-    let vAlwaysIncludeRowStartIndicies = Vector([|
-        -1s; 0s; 0s; 0s
-        -1s; 0s; 0s; 0s
-        -1s; 0s; 0s; 0s
-        -1s; 0s; 0s; 0s |])
-
-    let firstBit = 1uy
-
 let iToBits (i : int) =
     Convert.ToString (i, 2)
     |> fun s -> s.PadLeft (16, '0')
@@ -297,15 +289,8 @@ let inline swipeSIMD (cells : int16[]) =
         scoreB <- scoreB + calcScore scores (i' + 1)
         scoreC <- scoreC + calcScore scores (i' + 2)
         scoreD <- scoreD + calcScore scores (i' + 3)
-    
-    (scoreA + scoreB) + (scoreC + scoreD)
 
-let inline rotateCopy (cells:int16[]) (map:int[]) =
-    let cellsCopy = Array.copy cells
-    for i = 0 to 15 do
-        cellsCopy.[map.[i] + 1] <- cells.[i + 1]
-    
-    cellsCopy 
+    (scoreA + scoreB) + (scoreC + scoreD)
 
 let inline rotateDirection (cells : Span<int16>) direction =
     match direction with
@@ -325,7 +310,7 @@ let inline packBranchless (cells: Span<int16>) =
     let packIndex = buildIndexBranchless cells
     shuffle cells packMap[packIndex]
 
-let swipe (board:inref<Board>) direction =
+let swipe (board : Board) direction =
     let cells = Span (board.Cells, 1, 16)
     rotateDirection cells direction
     let _ = packBranchless cells
@@ -334,17 +319,24 @@ let swipe (board:inref<Board>) direction =
     rotateOppositeDirection cells direction
     board.SetScore (board.Score + int score)
 
-let trySwipe (board:Board) direction =
+let trySwipe (board : Board) direction =
     let origCells = boardPool.Rent()
     try
         Array.blit board.Cells 1 origCells 1 16
-        swipe &board direction
+        swipe board direction
         if GameSIMD.arraysEqual origCells board.Cells then board
         else Board.addRandomCell &board
     finally
         boardPool.Return(origCells)
 
-let canSwipe (board:Board) =
+let inline rotateCopy (cells:int16[]) (map:int[]) =
+    let cellsCopy = Array.copy cells
+    for i = 0 to 15 do
+        cellsCopy.[map.[i] + 1] <- cells.[i + 1]
+    
+    cellsCopy 
+
+let canSwipe (board : Board) =
     let hRows = ReadOnlySpan(board.Cells, 1, 16)
     let canSwipeHorizontal = GameArray.canSwipeRows board.Size &hRows (board.Size - 1)
     let rotated = rotateCopy board.Cells GameArray.clockwiseTransposeMap
