@@ -3,7 +3,10 @@
 open Common
 open MonteCarloSolver
 
-let origin = Console.WindowLeft, Console.WindowTop 
+let initializeConsole () =
+    Console.CursorVisible <- false
+    Console.Clear ()
+    Console.WindowLeft, Console.WindowTop 
 
 let dumpBoard origin (boardContext:BoardContext<_>) board =
     Console.SetCursorPosition origin
@@ -24,6 +27,7 @@ let rec getKeyboardDirection board =
 let main argv =
     let argsParser = Argu.ArgumentParser.Create<Args.Args>(programName = "2048.exe")
     let args = argsParser.Parse argv
+    let origin = initializeConsole ()
     let boardContext = GameSIMDBranchless.boardContext
     let board = boardContext.Create (args.GetResult(Args.Size, defaultValue = 4))
     let directionFactory =
