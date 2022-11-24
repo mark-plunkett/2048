@@ -32,6 +32,7 @@ Intel Core i7-6700K CPU 4.00GHz (Skylake), 1 CPU, 8 logical and 4 physical cores
 |      Array |   9.150 ms | 0.0338 ms | 0.0283 ms |  0.09 |  2828.1250 |     - |     - |  11.32 MB |
 |       SIMD |   4.324 ms | 0.0144 ms | 0.0120 ms |  0.04 |   960.9375 |     - |     - |   3.86 MB |
 |   SIMDPlus |   2.667 ms | 0.0074 ms | 0.0066 ms |  0.03 |   285.1563 |     - |     - |   1.14 MB |
+| SIMDBranchless |  1.521 ms | 0.0041 ms | 0.0035 ms |  0.02 |   167.9688 |     - |     - |    690.55 KB |
 
 ## Method Detail
 
