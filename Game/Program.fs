@@ -32,7 +32,7 @@ let main argv =
     let board = boardContext.Create (args.GetResult(Args.Size, defaultValue = 4))
     let directionFactory =
         match args.TryGetResult(Args.MonteCarlo) with
-        | Some (branches, depth) -> MonteCarloSolver.genNextDir branches depth boardContext
+        | Some (branches, depth) -> FastMonteCarloSolver.genNextDir branches depth boardContext
         | None -> getKeyboardDirection
 
     let rec loop board =

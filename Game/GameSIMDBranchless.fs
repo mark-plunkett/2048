@@ -87,11 +87,7 @@ module Board =
     let create = empty >> init
 
     let clone (board:Board) =
-        let random =
-            match board.RNGSeed with
-            | Some s -> Random(s)
-            | None -> Random()
-        Board(board.Size, Array.copy board.Cells, random, board.RNGSeed)
+        Board(board.Size, Array.copy board.Cells, board.RNG, board.RNGSeed)
 
     let toString (board:Board) =
         let newLine = Environment.NewLine
