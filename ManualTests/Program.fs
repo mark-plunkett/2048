@@ -24,7 +24,7 @@ let gameSim () =
             |> runLoop dirFactory (numRuns - 1) context
     
     let board = context.CreateWithSeed size seed
-    let dirFactory = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves context
+    let dirFactory = FastMonteCarloSolver.genNextDir monteNumBranches monteNumMoves context
     runLoop dirFactory numRuns context board |> ignore
 
 let vTune_swipeSIMD (cells:int16[]) =

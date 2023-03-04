@@ -19,7 +19,7 @@ type RunSummary = {
     mutable NumRuns: int
 }
 
-let randomDir context board =
+let inline randomDir context board =
     let random = context.RNG board
     enum<Direction>(random.Next(0, 4))
 

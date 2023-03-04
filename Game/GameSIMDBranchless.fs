@@ -7,7 +7,6 @@ open Microsoft.FSharp.NativeInterop
 open System
 open System.Collections.Generic
 open System.Numerics
-open System.Runtime.CompilerServices
 open System.Runtime.Intrinsics
 open System.Runtime.Intrinsics.X86
 
@@ -28,13 +27,11 @@ type Board =
     val Size: int
     val Cells: int16[]
     val RNG: Random
-    val RNGSeed: int option
-    new (size:int, cells:int16[], rng:Random, rngSeed:int option) = {
+    new (size:int, cells:int16[], rng:Random) = {
         Score= 0
         Size = size
         Cells = cells
         RNG = rng
-        RNGSeed = rngSeed
     }
 
     member this.SetScore(score) =
@@ -48,8 +45,7 @@ module Board =
 
         static member Next() =
             i <- i + 1
-            if i >= ps.Length then i <- 0
-            ps.[i]
+            ps[i % ps.Length]
 
     let boardSize size = 2 + (size * size)
     let emptyCells size =
@@ -59,10 +55,10 @@ module Board =
         cells
 
     let empty (size:int) =
-        Board(size, emptyCells size, Random(), None)
+        Board(size, emptyCells size, Random())
             
     let emptyWithSeed size seed =
-        Board(size, emptyCells size, Random(seed), Some seed)
+        Board(size, emptyCells size, Random(seed))
 
     let randomValue (board:Board) =
         int16 <| if board.RNG.NextDouble() > 0.9 then 2 else 1
@@ -87,7 +83,7 @@ module Board =
     let create = empty >> init
 
     let clone (board:Board) =
-        Board(board.Size, Array.copy board.Cells, board.RNG, board.RNGSeed)
+        Board(board.Size, Array.copy board.Cells, board.RNG)
 
     let toString (board:Board) =
         let newLine = Environment.NewLine
