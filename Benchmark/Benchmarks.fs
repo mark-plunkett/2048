@@ -44,8 +44,7 @@ type Benchmarks () =
     let boardSIMDBranchless = GameSIMDBranchless.boardContext.CreateWithSeed size seed
     let dirFactorySIMDBranchless = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameSIMDBranchless.boardContext
 
-    let boardSIMDBranchless = GameSIMDBranchless.boardContext.CreateWithSeed size seed
-    let dirFactoryFastMonteCarle = FastMonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameSIMDBranchless.boardContext
+    let dirFactoryFastMonteCarlo = FastMonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameSIMDBranchless.boardContext
 
     //[<Benchmark(Baseline=true)>]
     member this.Functional () =
@@ -73,4 +72,4 @@ type Benchmarks () =
 
     [<Benchmark>]
     member this.SIMDBranchlessFastMonteCarlo () =
-        runLoop dirFactoryFastMonteCarle numRuns GameSIMDBranchless.boardContext boardSIMDBranchless
+        runLoop dirFactoryFastMonteCarlo numRuns GameSIMDBranchless.boardContext boardSIMDBranchless

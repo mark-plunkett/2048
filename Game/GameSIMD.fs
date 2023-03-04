@@ -1,5 +1,7 @@
 module GameSIMD
 
+#nowarn "104"
+
 open System
 open System.Numerics
 

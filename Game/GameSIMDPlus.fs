@@ -1,6 +1,7 @@
 module GameSIMDPlus
 
 #nowarn "9"
+#nowarn "104"
 
 open Microsoft.FSharp.NativeInterop
 open System

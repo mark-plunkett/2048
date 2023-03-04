@@ -1,5 +1,7 @@
 module GameArray
 
+#nowarn "104"
+
 open System
 
 open Common

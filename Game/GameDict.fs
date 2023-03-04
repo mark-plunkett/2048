@@ -1,5 +1,7 @@
 module GameDict
 
+#nowarn "104"
+
 open System
 open System.Collections.Generic
 
