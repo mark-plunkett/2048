@@ -64,7 +64,7 @@ let oneStep () =
     Array.iter (fun c -> printf "%i, " c) cells'
     printfn ""
     Array.blit cells' 0 board.Cells 0 18
-    GameSIMDBranchless.swipe &board Left |> ignore
+    GameSIMDBranchless.swipe board Direction.Left |> ignore
 
 let simBenchmark () =
     let size = 4

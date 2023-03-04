@@ -17,10 +17,10 @@ let dumpBoard origin (boardContext:BoardContext<_>) board =
 
 let rec getKeyboardDirection board =
     match Console.ReadKey().Key with
-    | ConsoleKey.UpArrow -> Up
-    | ConsoleKey.DownArrow -> Down
-    | ConsoleKey.LeftArrow -> Left
-    | ConsoleKey.RightArrow -> Right
+    | ConsoleKey.UpArrow -> Direction.Up
+    | ConsoleKey.DownArrow -> Direction.Down
+    | ConsoleKey.LeftArrow -> Direction.Left
+    | ConsoleKey.RightArrow -> Direction.Right
     | _ -> getKeyboardDirection board
 
 [<EntryPoint>]

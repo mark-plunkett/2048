@@ -1,6 +1,7 @@
 module GameSIMDBranchless
 
 #nowarn "9"
+#nowarn "104"
 
 open Microsoft.FSharp.NativeInterop
 open System
@@ -294,17 +295,17 @@ let inline swipeSIMD (cells : int16[]) =
 
 let inline rotateDirection (cells : Span<int16>) direction =
     match direction with
-    | Left -> ()
-    | Right -> shuffle cells Constants.flipTransposeMap
-    | Up -> shuffle cells Constants.antiClockwiseTransposeMap
-    | Down -> shuffle cells Constants.clockwiseTransposeMap
+    | Direction.Left -> ()
+    | Direction.Right -> shuffle cells Constants.flipTransposeMap
+    | Direction.Up -> shuffle cells Constants.antiClockwiseTransposeMap
+    | Direction.Down -> shuffle cells Constants.clockwiseTransposeMap
 
 let inline rotateOppositeDirection (cells : Span<int16>) direction =
     match direction with
-    | Left -> ()
-    | Right -> shuffle cells Constants.flipTransposeMap
-    | Up -> shuffle cells Constants.clockwiseTransposeMap
-    | Down -> shuffle cells Constants.antiClockwiseTransposeMap
+    | Direction.Left -> ()
+    | Direction.Right -> shuffle cells Constants.flipTransposeMap
+    | Direction.Up -> shuffle cells Constants.clockwiseTransposeMap
+    | Direction.Down -> shuffle cells Constants.antiClockwiseTransposeMap
 
 let inline packBranchless (cells: Span<int16>) =
     let packIndex = buildIndexBranchless cells

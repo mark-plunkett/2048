@@ -1,5 +1,7 @@
 module GameFunctional
 
+#nowarn "104"
+
 open System
 
 open Common
@@ -93,20 +95,20 @@ let padList n value list =
 let swipe board direction =
     let cellFilter rowCol cellPos = 
         match direction with
-        | Up | Down -> cellPos.X = rowCol
-        | Left | Right -> cellPos.Y = rowCol
+        | Direction.Up | Direction.Down -> cellPos.X = rowCol
+        | Direction.Left | Direction.Right -> cellPos.Y = rowCol
 
     let cellMapper rowOrCol i =
         match direction with
-        | Up -> {X = rowOrCol; Y = i + 1}
-        | Down -> {X = rowOrCol; Y = board.Size - i}
-        | Left -> {X = i + 1; Y = rowOrCol}
-        | Right -> {X = board.Size - i; Y = rowOrCol}
+        | Direction.Up -> {X = rowOrCol; Y = i + 1}
+        | Direction.Down -> {X = rowOrCol; Y = board.Size - i}
+        | Direction.Left -> {X = i + 1; Y = rowOrCol}
+        | Direction.Right -> {X = board.Size - i; Y = rowOrCol}
 
     let cellSorter cells =
         match direction with
-        | Up | Left -> cells
-        | Down | Right -> List.rev cells
+        | Direction.Up | Direction.Left -> cells
+        | Direction.Down | Direction.Right -> List.rev cells
 
     let cellFolder rowOrCol cells (i, newVal) =
         Map.add (cellMapper rowOrCol i) newVal cells

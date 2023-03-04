@@ -95,7 +95,7 @@ let ``swipe correctly merges cells`` cells expected =
     let board = GameSIMDBranchless.Board.create 4
     let expected = GameSIMDBranchless.Board.fromList expected
     Array.blit (GameSIMDBranchless.Board.fromList cells) 1 board.Cells 1 16
-    swipe &board Left |> ignore
+    swipe board Direction.Left |> ignore
     board.Cells.ShouldBeEquivalentTo(expected)
     // try
         // Assert.Equal<int16[]>(expected, board.Cells)

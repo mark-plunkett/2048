@@ -1,6 +1,5 @@
 ﻿module Benchmark 
 
-open System
 open BenchmarkDotNet.Diagnosers
 open BenchmarkDotNet.Attributes
 
@@ -45,6 +44,9 @@ type Benchmarks () =
     let boardSIMDBranchless = GameSIMDBranchless.boardContext.CreateWithSeed size seed
     let dirFactorySIMDBranchless = MonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameSIMDBranchless.boardContext
 
+    let boardSIMDBranchless = GameSIMDBranchless.boardContext.CreateWithSeed size seed
+    let dirFactoryFastMonteCarle = FastMonteCarloSolver.genNextDir monteNumBranches monteNumMoves GameSIMDBranchless.boardContext
+
     //[<Benchmark(Baseline=true)>]
     member this.Functional () =
         runLoop dirFactoryFunctional numRuns GameFunctional.boardContext boardFunctional
@@ -65,6 +67,10 @@ type Benchmarks () =
     member this.SIMDPlus () =
         runLoop dirFactorySIMDPlus numRuns GameSIMDPlus.boardContext boardSIMDPlus
 
-    [<Benchmark>]
+    // [<Benchmark(Baseline = true)>]
     member this.SIMDBranchless () =
         runLoop dirFactorySIMDBranchless numRuns GameSIMDBranchless.boardContext boardSIMDBranchless
+
+    [<Benchmark>]
+    member this.SIMDBranchlessFastMonteCarlo () =
+        runLoop dirFactoryFastMonteCarle numRuns GameSIMDBranchless.boardContext boardSIMDBranchless

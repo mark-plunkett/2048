@@ -15,7 +15,11 @@ type Board<'t> = {
     RNGSeed: int option
 }
 
-type Direction = | Up | Down | Left | Right
+type Direction =
+    | Up = 0
+    | Down = 1
+    | Left = 2
+    | Right = 3
 
 type BoardContext<'t> = {
     TrySwipe: 't -> Direction -> 't

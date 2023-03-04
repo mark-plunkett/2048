@@ -214,5 +214,5 @@ let ``swipe correctly merges cells`` cells expected =
     let board = Board.create 4
     let expected = Board.fromList expected
     let board' = { board with Cells = cells |> Board.fromList }
-    swipe board' Left |> ignore
+    swipe board' Direction.Left |> ignore
     Assert.Equal<int16[]>(expected, board'.Cells)

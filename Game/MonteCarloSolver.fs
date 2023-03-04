@@ -14,10 +14,10 @@ type Run = {
 let randomDir context board =
     let random = context.RNG board
     match random.Next(0, 4) with
-    | 0 -> Up
-    | 1 -> Down
-    | 2 -> Left
-    | 3 -> Right
+    | 0 -> Direction.Up
+    | 1 -> Direction.Down
+    | 2 -> Direction.Left
+    | 3 -> Direction.Right
     | x -> failwithf "Unsupported: %i" x
 
 let runMoves num context board =

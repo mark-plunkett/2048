@@ -133,17 +133,17 @@ let rotateCopy (cells:int16[]) (map:int[]) =
 
 let rotateDirection (cells:int16[]) direction =
     match direction with
-    | Left -> ()
-    | Right -> rotate cells GameArray.flipTransposeMap
-    | Up -> rotate cells GameArray.clockwiseTransposeMap
-    | Down -> rotate cells GameArray.anticlockwiseTransposeMap
+    | Direction.Left -> ()
+    | Direction.Right -> rotate cells GameArray.flipTransposeMap
+    | Direction.Up -> rotate cells GameArray.clockwiseTransposeMap
+    | Direction.Down -> rotate cells GameArray.anticlockwiseTransposeMap
 
 let rotateOppositeDirection (cells:int16[]) direction =
     match direction with
-    | Left -> ()
-    | Right -> rotate cells GameArray.flipTransposeMap
-    | Up -> rotate cells GameArray.anticlockwiseTransposeMap
-    | Down -> rotate cells GameArray.clockwiseTransposeMap
+    | Direction.Left -> ()
+    | Direction.Right -> rotate cells GameArray.flipTransposeMap
+    | Direction.Up -> rotate cells GameArray.anticlockwiseTransposeMap
+    | Direction.Down -> rotate cells GameArray.clockwiseTransposeMap
 
 let swipe (board:Board<int16[]>) direction =
     rotateDirection board.Cells direction
